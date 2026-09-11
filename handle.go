@@ -46,10 +46,11 @@ func NewCLIHandler(w io.Writer, opts ...CLIHandlerOption) slog.Handler {
 	}
 	writer := newWriter(w)
 	config := newConfig(&option, writer.terminal)
+	source := newSource(option.source)
 	return &CLIHandler{
 		config: config,
 		writer: writer,
-		source: newSource(config.source.value),
+		source: source,
 	}
 }
 

@@ -72,11 +72,14 @@ func newLevelConfig(threshold slog.Leveler, styles map[slog.Level]LevelStyle, co
 		if name == "" {
 			name = lv.String()
 		}
+		prefix := style.Prefix
+		suffix := style.Suffix
+		color := style.Color
 		var text []byte
-		text = style.Prefix.Color.appendText(text, style.Prefix.Text, colored)
+		text = prefix.Color.appendText(text, prefix.Text, colored)
 		if style.Width > 0 {
 			left, right := align(name, style.Width)
-			text = style.Color.appendPrefix(text, colored)
+			text = color.appendPrefix(text, colored)
 			for range left {
 				text = append(text, pad)
 			}
@@ -84,11 +87,11 @@ func newLevelConfig(threshold slog.Leveler, styles map[slog.Level]LevelStyle, co
 			for range right {
 				text = append(text, pad)
 			}
-			text = style.Color.appendSuffix(text, colored)
+			text = color.appendSuffix(text, colored)
 		} else {
-			text = style.Color.appendText(text, name, colored)
+			text = color.appendText(text, name, colored)
 		}
-		text = style.Suffix.Color.appendText(text, style.Suffix.Text, colored)
+		text = suffix.Color.appendText(text, suffix.Text, colored)
 		texts[lv] = text
 	}
 	return levelConfig{
@@ -128,26 +131,23 @@ func newLabelConfig(label string, style LabelStyle, colored bool) labelConfig {
 	}
 	var prefix []byte
 	prefix = style.Prefix.Color.appendText(prefix, style.Prefix.Text, colored)
+	prefix = style.Color.appendPrefix(prefix, colored)
 	var suffix []byte
 	if style.Width > 0 {
 		left, right := align(label, style.Width)
-		prefix = style.Color.appendPrefix(prefix, colored)
 		for range left {
 			prefix = append(prefix, pad)
 		}
 		for range right {
 			suffix = append(suffix, pad)
 		}
-		suffix = style.Color.appendSuffix(suffix, colored)
-	} else {
-		prefix = style.Color.appendPrefix(prefix, colored)
-		suffix = style.Color.appendSuffix(suffix, colored)
 	}
+	suffix = style.Color.appendSuffix(suffix, colored)
 	suffix = style.Suffix.Color.appendText(suffix, style.Suffix.Text, colored)
 	return labelConfig{
 		prefix: prefix,
-		value:  label,
 		suffix: suffix,
+		value:  label,
 	}
 }
 
