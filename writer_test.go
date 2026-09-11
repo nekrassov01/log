@@ -61,6 +61,15 @@ func Test_newWriter(t *testing.T) {
 				discard: false,
 			},
 		},
+		{
+			name: "pipe",
+			args: args{
+				w: setupPipe,
+			},
+			want: want{
+				discard: false,
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -283,6 +292,25 @@ func Test_resolveWriter(t *testing.T) {
 				same: true,
 			},
 		},
+		{
+			name: "pipe",
+			args: args{
+				w: setupPipe,
+			},
+			want: want{
+				same: true,
+			},
+		},
+		{
+			name: "pipe with terminal flag",
+			args: args{
+				w:        setupPipe,
+				terminal: true,
+			},
+			want: want{
+				same: true,
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -334,6 +362,12 @@ func Test_isTerminal(t *testing.T) {
 			name: "file",
 			args: args{
 				w: setupFile,
+			},
+		},
+		{
+			name: "pipe",
+			args: args{
+				w: setupPipe,
 			},
 		},
 	}

@@ -107,6 +107,41 @@ func setupFile(t *testing.T) io.Writer {
 	return f
 }
 
+// setupFileOutput supplies independent read and write offsets for output tests.
+func setupFileOutput(t *testing.T) (*os.File, *os.File) {
+	t.Helper()
+	w := setupFile(t).(*os.File)
+	r, err := os.Open(w.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = r.Close()
+	})
+	return r, w
+}
+
+// setupPipe supplies a pipe's write end with automatic cleanup of both ends.
+func setupPipe(t *testing.T) io.Writer {
+	t.Helper()
+	_, w := setupPipeOutput(t)
+	return w
+}
+
+// setupPipeOutput supplies both pipe ends with automatic cleanup.
+func setupPipeOutput(t *testing.T) (*os.File, *os.File) {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = r.Close()
+		_ = w.Close()
+	})
+	return r, w
+}
+
 // testDefaultStyle records the public default independently of DefaultStyle.
 func testDefaultStyle() *Style {
 	return &Style{
