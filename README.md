@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">LOG</h1>
 
-<p align="center">A fast, customizable, minimal, zero-allocation slog handler for Go CLIs</p>
+<p align="center">A fast, zero-allocation slog handler for Go CLIs</p>
 <p align="center">
   <a href="https://github.com/nekrassov01/log/actions/workflows/ci.yml"><img src="https://github.com/nekrassov01/log/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <a href="https://pkg.go.dev/github.com/nekrassov01/log"><img src="https://pkg.go.dev/badge/github.com/nekrassov01/log.svg" alt="Go Reference"></a>
@@ -12,7 +12,6 @@
 
 ## Table of contents
 
-- [Table of contents](#table-of-contents)
 - [Overview](#overview)
 - [Features](#features)
 - [Installation](#installation)
@@ -20,16 +19,18 @@
 - [Customization](#customization)
 - [Performance](#performance)
   - [Results](#results)
-  - [Raw results](#raw-results)
   - [Workloads](#workloads)
   - [Measurement boundaries](#measurement-boundaries)
   - [Running](#running)
+  - [Raw results](#raw-results)
 - [Author](#author)
 - [License](#license)
 
 ## Overview
 
-`nekrassov01/log` brings readable terminal output to Go's structured logging. Keep `slog.Logger`, attributes, and groups; use `CLIHandler` to display them with compact level labels, optional time and source information, and customizable styles. Colors are enabled automatically for terminals and omitted for files and pipes. The visual style is inspired by [charmbracelet/log](https://github.com/charmbracelet/log).
+`nekrassov01/log` provides `CLIHandler`, a `log/slog` handler for readable CLI output. Use it with `slog.Logger` to display messages, attributes, and groups with compact level labels. Colors are enabled automatically for terminals and omitted for files and pipes.
+
+The visual style is inspired by [charmbracelet/log](https://github.com/charmbracelet/log).
 
 ## Features
 
@@ -47,7 +48,7 @@ CLI-focused output with structured logging support:
 Install with:
 
 ```sh
-go get github.com/nekrassov01/log
+go get github.com/nekrassov01/log@latest
 ```
 
 ## Quick start
@@ -69,7 +70,7 @@ func main() {
 		log.WithTime(),
 		log.WithLevel(slog.LevelDebug),
 		log.WithSourceFunction(),
-		log.WithLabel("APP:"),
+		log.WithLabel("DEFAULT STYLE:"),
 	)
 	logger := slog.New(handler).
 		WithGroup("default").
@@ -84,7 +85,7 @@ func main() {
 }
 ```
 
-Terminal output on dark and light backgrounds:
+The default-style output from [examples/main.go](./examples/main.go), shown on dark and light backgrounds:
 
 ![Four log levels with CLI command details on a dark background](./assets/examples/dark.png)
 
@@ -100,9 +101,21 @@ Configure output, appearance, and attribute replacement through separate options
 - Use `WithStyle(NewStyle(...))` to customize colors, affixes, level text, alignment, and attribute separators.
 - Use `WithAttrReplacer()` to redact, transform, or remove ordinary attributes, including nested ones.
 
+For example, change the message color while keeping the remaining default styles:
+
+```go
+handler := log.NewCLIHandler(os.Stdout,
+	log.WithStyle(log.NewStyle(
+		log.WithMessageStyle(log.MessageStyle{
+			Color: log.NewColor(log.CodeFgCyan),
+		}),
+	)),
+)
+```
+
 Built-in time, level, source, label, and message are styled separately and do not pass through the attribute replacer.
 
-For example, if a shared request logger attaches a `request_body` attribute that your application does not need, omit it at the handler:
+If a shared request logger attaches a `request_body` attribute that your application does not need, omit it at the handler:
 
 ```go
 handler := log.NewCLIHandler(os.Stdout,
@@ -140,6 +153,63 @@ Representative serial results on Apple M2, darwin/arm64. Each value is the media
 Measured with `io.Discard`, excluding terminal colors, output locking, and operating-system I/O. Input construction and handler setup are outside the timed loop.
 
 Zero allocation is workload-dependent: `slog.Record` allocates storage beyond five top-level attributes per write. `Any` formatting, `LogValuer` implementations, and outputs exceeding retained buffer capacities can also allocate.
+
+### Workloads
+
+The suite follows the workload categories in [zerolog's benchmarks](https://github.com/rs/zerolog/blob/master/benchmark_test.go), adapted to `slog` and CLI output. It is not an output-equivalent comparison with zerolog's JSON encoding.
+
+Each benchmark family measures a different part of log handling:
+
+| Benchmark suffix | Measured work                                                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------- |
+| `Disabled`       | Level filtering with and without supplied attributes                                           |
+| `Message`        | Empty, escaped, Unicode, invalid UTF-8, and large messages                                     |
+| `BuiltIns`       | Optional time, source path, source function, and label output                                  |
+| `AttrType`       | Scalars, groups, `LogValuer`, and `Any` values                                                 |
+| `AttrCount`      | Flat attribute lists, including the five-to-six attribute allocation boundary in `slog.Record` |
+| `GroupDepth`     | Per-write traversal of nested attribute groups, with one leaf at every depth                   |
+| `AttrReplacer`   | No replacement, identity, redaction, removal, and expansion into a group                       |
+| `WithAttrs`      | Handler derivation and attribute preformatting, without writing a record                       |
+| `Parallel`       | Shared-handler throughput, with and without the output lock                                    |
+
+### Measurement boundaries
+
+Benchmark inputs, case tables, mock types, and shared helpers live in [benchmarks/helper_test.go](./benchmarks/helper_test.go). The benchmark functions contain setup and timed operations.
+
+- `AttrsAtSetup` measures writes after attributes have been preformatted. Setup is not timed.
+- `AttrsAtWrite` measures attribute resolution and formatting on every write. Input attributes are constructed before timing.
+- `WithAttrs` measures setup itself, appending attributes to a handler that already has one cached attribute.
+- `AttrType` excludes input construction and initial `Any` boxing. `LogValuer` resolution and any values it creates are timed.
+- Source benchmarks repeatedly use the same logging call site; they primarily measure cached lookups.
+- `Parallel/Discard` bypasses the handler's output lock. `Parallel/Writer` uses a stateless writer that exercises that lock without operating-system I/O. Parallel `ns/op` measures aggregate throughput, not individual call latency.
+- Writers are not terminals. Terminal colors, console I/O, and Windows translation are not measured.
+- Large messages and deep groups can exceed the pool's capacity limits and require allocations on subsequent writes.
+
+### Running
+
+Reproduce the benchmark families summarized in [Results](#results):
+
+```sh
+go test -run '^$' -bench '^BenchmarkCLIHandler_(BuiltIns|AttrCount)$' -benchmem -benchtime=100000x -count=3 ./benchmarks
+```
+
+Run every case with a fixed iteration count:
+
+```sh
+go test -run '^$' -bench . -benchmem -benchtime=100000x -count=3 ./benchmarks
+```
+
+Run only the attribute-count cases:
+
+```sh
+go test -run '^$' -bench '^BenchmarkCLIHandler_AttrCount$' -benchmem -benchtime=100000x -count=3 ./benchmarks
+```
+
+Run parallel cases with different processor counts:
+
+```sh
+go test -run '^$' -bench '^BenchmarkCLIHandler_Parallel$' -benchmem -cpu=1,2,4 -count=3 ./benchmarks
+```
 
 ### Raw results
 
@@ -218,63 +288,6 @@ BenchmarkCLIHandler_AttrCount/256/AttrsAtWrite-8  100000   8469 ns/op  10249 B/o
 BenchmarkCLIHandler_AttrCount/256/AttrsAtWrite-8  100000   8757 ns/op  10248 B/op  1 allocs/op
 PASS
 ok    github.com/nekrassov01/log/benchmarks  5.346s
-```
-
-### Workloads
-
-The suite follows the workload categories in [zerolog's benchmarks](https://github.com/rs/zerolog/blob/master/benchmark_test.go), adapted to `slog` and CLI output. It is not an output-equivalent comparison with zerolog's JSON encoding.
-
-Each benchmark family measures a different part of log handling:
-
-| Benchmark suffix | Measured work                                                                                  |
-| ---------------- | ---------------------------------------------------------------------------------------------- |
-| `Disabled`       | Level filtering with and without supplied attributes                                           |
-| `Message`        | Empty, escaped, Unicode, invalid UTF-8, and large messages                                     |
-| `BuiltIns`       | Optional time, source path, source function, and label output                                  |
-| `AttrType`       | Scalars, groups, `LogValuer`, and `Any` values                                                 |
-| `AttrCount`      | Flat attribute lists, including the five-to-six attribute allocation boundary in `slog.Record` |
-| `GroupDepth`     | Per-write traversal of nested attribute groups, with one leaf at every depth                   |
-| `AttrReplacer`   | No replacement, identity, redaction, removal, and expansion into a group                       |
-| `WithAttrs`      | Handler derivation and attribute preformatting, without writing a record                       |
-| `Parallel`       | Shared-handler throughput, with and without the output lock                                    |
-
-### Measurement boundaries
-
-Benchmark inputs, case tables, mock types, and shared helpers live in [benchmarks/helper_test.go](./benchmarks/helper_test.go). The benchmark functions contain setup and timed operations.
-
-- `AttrsAtSetup` measures writes after attributes have been preformatted. Setup is not timed.
-- `AttrsAtWrite` measures attribute resolution and formatting on every write. Input attributes are constructed before timing.
-- `WithAttrs` measures setup itself, appending attributes to a handler that already has one cached attribute.
-- `AttrType` excludes input construction and initial `Any` boxing. `LogValuer` resolution and any values it creates are timed.
-- Source benchmarks repeatedly use the same logging call site; they primarily measure cached lookups.
-- `Parallel/Discard` bypasses the handler's output lock. `Parallel/Writer` uses a stateless writer that exercises that lock without operating-system I/O. Parallel `ns/op` measures aggregate throughput, not individual call latency.
-- Writers are not terminals. Terminal colors, console I/O, and Windows translation are not measured.
-- Large messages and deep groups can exceed the pool's capacity limits and require allocations on subsequent writes.
-
-### Running
-
-Reproduce the benchmark families shown above:
-
-```sh
-go test -run '^$' -bench '^BenchmarkCLIHandler_(BuiltIns|AttrCount)$' -benchmem -benchtime=100000x -count=3 ./benchmarks
-```
-
-Run every case with a fixed iteration count:
-
-```sh
-go test -run '^$' -bench . -benchmem -benchtime=100000x -count=3 ./benchmarks
-```
-
-Run only the attribute-count cases:
-
-```sh
-go test -run '^$' -bench '^BenchmarkCLIHandler_AttrCount$' -benchmem -benchtime=100000x -count=3 ./benchmarks
-```
-
-Run parallel cases with different processor counts:
-
-```sh
-go test -run '^$' -bench '^BenchmarkCLIHandler_Parallel$' -benchmem -cpu=1,2,4 -count=3 ./benchmarks
 ```
 
 ## Author
