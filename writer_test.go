@@ -3,7 +3,6 @@ package log
 import (
 	"bytes"
 	"io"
-	"runtime"
 	"testing"
 )
 
@@ -274,13 +273,14 @@ func Test_resolveWriter(t *testing.T) {
 			},
 		},
 		{
-			name: "terminal file",
+			name: "nonterminal file with terminal flag",
 			args: args{
 				w:        setupFile,
 				terminal: true,
 			},
 			want: want{
-				same: runtime.GOOS != "windows",
+				// go-colorable checks the actual file and leaves non-terminals unchanged.
+				same: true,
 			},
 		},
 	}
