@@ -104,18 +104,15 @@ type TimeStyle struct {
 }
 
 // LevelStyle decorates a built-in log level.
-// Prefix and Suffix surround the level text; Color applies to the text and padding.
-// A nil Color adds no color.
+// Empty Text uses [slog.Level.String]. Color applies to the text and padding.
+// Width sets the minimum text width, excluding affixes, without truncation.
+// Padding is centered with any extra column on the right; non-positive Width adds none.
 type LevelStyle struct {
 	Prefix AffixStyle
 	Suffix AffixStyle
-	// Text replaces the level name. An empty Text uses slog.Level.String.
-	Text  string
-	Color *Color
-	// Width is the minimum display width, excluding Prefix and Suffix.
-	// Text is centered without truncation; an odd padding column goes on the right.
-	// A non-positive Width adds no padding.
-	Width int
+	Text   string
+	Color  *Color
+	Width  int
 }
 
 // SourceStyle decorates the built-in source location.
@@ -129,16 +126,14 @@ type SourceStyle struct {
 }
 
 // LabelStyle decorates the text set by [WithLabel].
-// Prefix and Suffix surround the label; Color applies to the label and padding.
-// A nil Color adds no color. An empty label omits all decoration.
+// An empty label omits all decoration. Color applies to the label and padding.
+// Width sets the minimum label width, excluding affixes, without truncation.
+// Padding is centered with any extra column on the right; non-positive Width adds none.
 type LabelStyle struct {
 	Prefix AffixStyle
 	Suffix AffixStyle
 	Color  *Color
-	// Width is the minimum display width, excluding Prefix and Suffix.
-	// The label is centered without truncation; an odd padding column goes on the right.
-	// A non-positive Width adds no padding.
-	Width int
+	Width  int
 }
 
 // MessageStyle decorates the log message.
@@ -151,14 +146,12 @@ type MessageStyle struct {
 }
 
 // AttrStyle decorates ordinary attributes without affecting built-in output.
+// KeyColor also applies to the group path and separator.
+// Separator is written verbatim; an empty value adds nothing.
 type AttrStyle struct {
-	// KeyColor applies to the group path, key, and separator. Nil adds no color.
-	KeyColor *Color
-	// ValueColor applies to non-empty formatted values. Nil adds no color.
+	KeyColor   *Color
 	ValueColor *Color
-	// Separator is written verbatim between the key and value.
-	// An empty Separator adds nothing; DefaultStyle uses "=".
-	Separator string
+	Separator  string
 }
 
 // AffixStyle decorates a literal prefix or suffix.

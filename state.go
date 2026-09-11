@@ -28,8 +28,7 @@ var pool = &sync.Pool{
 	},
 }
 
-// state owns the line and attribute traversal buffers for a single operation.
-// They have the same lifetime and are acquired and released together.
+// state holds line and attribute buffers with a shared lifetime.
 type state struct {
 	line lineState
 	attr attrState

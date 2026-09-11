@@ -44,7 +44,6 @@ func (o *writer) write(buf []byte) error {
 }
 
 // resolveWriter maps nil to io.Discard and adapts terminal files for Windows.
-// Other writers are returned unchanged.
 func resolveWriter(w io.Writer, terminal bool) io.Writer {
 	if w == nil {
 		return io.Discard

@@ -95,7 +95,7 @@ func BenchmarkCLIHandler_AttrCount(b *testing.B) {
 }
 
 // BenchmarkCLIHandler_GroupDepth measures nested attribute traversal on each write.
-// Group construction is outside the timed loop; every depth has one leaf.
+// Construction is not timed; the input has one leaf regardless of depth.
 func BenchmarkCLIHandler_GroupDepth(b *testing.B) {
 	for _, depth := range testGroupDepths() {
 		b.Run(strconv.Itoa(depth), func(b *testing.B) {

@@ -20,10 +20,9 @@ var _ slog.Handler = (*CLIHandler)(nil)
 // CLIHandler implements [slog.Handler] for human-readable CLI output.
 // Create a handler with [NewCLIHandler]; the zero value is not ready for use.
 //
-// Its methods may be called concurrently. Handlers returned by [CLIHandler.WithAttrs]
-// and [CLIHandler.WithGroup] share the output lock and source cache, but do not
-// change the original handler's attributes or groups. Separately constructed
-// handlers do not share an output lock.
+// Its methods are safe for concurrent use. [CLIHandler.WithAttrs] and
+// [CLIHandler.WithGroup] preserve the original attributes and groups while sharing
+// the output lock and source cache. Separately constructed handlers use separate locks.
 type CLIHandler struct {
 	config config
 	attrs  []byte
@@ -47,10 +46,11 @@ func NewCLIHandler(w io.Writer, opts ...CLIHandlerOption) slog.Handler {
 	}
 	writer := newWriter(w)
 	config := newConfig(&option, writer.terminal)
+	source := newSource(option.source)
 	return &CLIHandler{
 		config: config,
 		writer: writer,
-		source: newSource(config.source.value),
+		source: source,
 	}
 }
 
@@ -66,8 +66,7 @@ func (o *CLIHandler) Enabled(_ context.Context, level slog.Level) bool {
 
 // Handle formats record and writes the result, followed by a newline.
 // It returns any write error, including [io.ErrShortWrite] for a partial write.
-// It does not check the minimum level or use the context; [slog.Logger] calls
-// [CLIHandler.Enabled] before passing a record to Handle.
+// It ignores the context and does not check the minimum level.
 func (o *CLIHandler) Handle(_ context.Context, record slog.Record) error {
 	config := &o.config
 	s := acquireState()
@@ -103,8 +102,7 @@ func (o *CLIHandler) Handle(_ context.Context, record slog.Record) error {
 }
 
 // WithAttrs returns a handler with attrs appended to its existing attributes.
-// It resolves, replaces, and formats attrs during this call, using the current
-// groups. Later records reuse the formatted output without repeating that work.
+// Attributes are resolved, replaced, and formatted once under the current groups.
 // An empty attrs slice returns the receiver.
 func (o *CLIHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	if len(attrs) == 0 {

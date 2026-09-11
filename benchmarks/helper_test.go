@@ -34,7 +34,7 @@ type testBuiltInCase struct {
 	opts []log.CLIHandlerOption
 }
 
-// testAttrCase names one value-formatting workload without a timed callback wrapper.
+// testAttrCase describes one value-formatting workload.
 type testAttrCase struct {
 	name string
 	attr slog.Attr
@@ -71,13 +71,12 @@ func (o testObject) LogValue() slog.Value {
 // testStringer provides an Any value with a String method.
 type testStringer string
 
-// String returns the fixture's text without introducing formatting work.
+// String returns the fixture's text.
 func (o testStringer) String() string {
 	return string(o)
 }
 
-// testWriter discards bytes without matching io.Discard, exercising the handler's lock.
-// It has no mutable state and may be shared by concurrent benchmark workers.
+// testWriter is stateless and discards bytes while exercising the handler's output lock.
 type testWriter struct{}
 
 // Write reports a successful full write without performing operating-system I/O.
@@ -173,7 +172,6 @@ func testBuiltIns() []testBuiltInCase {
 }
 
 // testAttrTypes supplies scalar, structured, and Any workloads for writing and setup.
-// Any values use the handler's ordinary formatting, not zerolog's JSON encoders.
 func testAttrTypes() []testAttrCase {
 	at := time.Date(2025, time.April, 1, 12, 34, 56, 123456789, time.UTC)
 	err := errors.New("input could not be processed")
@@ -363,12 +361,12 @@ func testAttrs(count int) []slog.Attr {
 	return attrs
 }
 
-// testGroupDepths increases nesting while keeping the leaf count constant.
+// testGroupDepths supplies nesting depths.
 func testGroupDepths() []int {
 	return []int{0, 1, 2, 4, 8, 16, 32, 64}
 }
 
-// testGroup wraps one leaf in depth groups without changing the leaf count.
+// testGroup wraps one leaf in depth groups.
 func testGroup(depth int) slog.Attr {
 	attr := slog.Int("key", 1)
 	for range depth {
