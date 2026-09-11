@@ -2,12 +2,73 @@ package log
 
 import (
 	"bytes"
+	"io"
 	"log/slog"
+	"os"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
 )
+
+// TestCLIHandler_Nonterminal checks that terminal detection disables configured
+// colors in both cached and per-record output through the public handler API.
+func TestCLIHandler_Nonterminal(t *testing.T) {
+	type args struct {
+		open func(*testing.T) (*os.File, *os.File)
+	}
+	type want struct {
+		val string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "file",
+			args: args{
+				open: setupFileOutput,
+			},
+			want: want{
+				val: "1970-01-01T00:00:01Z INF APP message job.cached=value job.count=1\n",
+			},
+		},
+		{
+			name: "pipe",
+			args: args{
+				open: setupPipeOutput,
+			},
+			want: want{
+				val: "1970-01-01T00:00:01Z INF APP message job.cached=value job.count=1\n",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r, w := test.args.open(t)
+			handler := NewCLIHandler(w, WithTime(), WithLabel("APP"), WithStyle(NewStyle(
+				WithTimeStyle(TimeStyle{
+					Color: NewColor(CodeFgRed),
+				}),
+				WithMessageStyle(MessageStyle{
+					Color: NewColor(CodeFgGreen),
+				}),
+				WithAttrStyle(AttrStyle{
+					KeyColor:   NewColor(CodeFgBlue),
+					ValueColor: NewColor(CodeFgYellow),
+					Separator:  "=",
+				}),
+			))).WithGroup("job").WithAttrs([]slog.Attr{slog.String("cached", "value")})
+			err := handler.Handle(t.Context(), testRecord(testTime(), slog.LevelInfo, "message", 0, slog.Int("count", 1)))
+			assertError(t, err, nil)
+			assertError(t, w.Close(), nil)
+			got, err := io.ReadAll(r)
+			assertError(t, err, nil)
+			assertBytes(t, got, test.want.val, "output")
+		})
+	}
+}
 
 // TestCLIHandler_Concurrent checks that derived handlers serialize complete records
 // through their shared writer, including when source caching is enabled.

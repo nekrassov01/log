@@ -3,7 +3,6 @@ package log
 import (
 	"bytes"
 	"io"
-	"runtime"
 	"testing"
 )
 
@@ -57,6 +56,15 @@ func Test_newWriter(t *testing.T) {
 			name: "file",
 			args: args{
 				w: setupFile,
+			},
+			want: want{
+				discard: false,
+			},
+		},
+		{
+			name: "pipe",
+			args: args{
+				w: setupPipe,
 			},
 			want: want{
 				discard: false,
@@ -274,13 +282,33 @@ func Test_resolveWriter(t *testing.T) {
 			},
 		},
 		{
-			name: "terminal file",
+			name: "nonterminal file with terminal flag",
 			args: args{
 				w:        setupFile,
 				terminal: true,
 			},
 			want: want{
-				same: runtime.GOOS != "windows",
+				// go-colorable checks the actual file and leaves non-terminals unchanged.
+				same: true,
+			},
+		},
+		{
+			name: "pipe",
+			args: args{
+				w: setupPipe,
+			},
+			want: want{
+				same: true,
+			},
+		},
+		{
+			name: "pipe with terminal flag",
+			args: args{
+				w:        setupPipe,
+				terminal: true,
+			},
+			want: want{
+				same: true,
 			},
 		},
 	}
@@ -334,6 +362,12 @@ func Test_isTerminal(t *testing.T) {
 			name: "file",
 			args: args{
 				w: setupFile,
+			},
+		},
+		{
+			name: "pipe",
+			args: args{
+				w: setupPipe,
 			},
 		},
 	}
