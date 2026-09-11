@@ -35,9 +35,8 @@ func WithTimeLayout(layout string) CLIHandlerOption {
 
 // WithLevel sets the minimum level accepted by the handler.
 // The default is [slog.LevelInfo]. A nil level leaves the current setting unchanged.
-// The handler calls level.Level for each enabled check, so a [slog.LevelVar]
-// can change the threshold after construction.
-// Custom level implementations must support concurrent calls to Level.
+// Level is read on each enabled check, allowing updates through [slog.LevelVar].
+// Custom implementations must support concurrent Level calls.
 func WithLevel(level slog.Leveler) CLIHandlerOption {
 	return CLIHandlerOption{
 		apply: func(o *option) {

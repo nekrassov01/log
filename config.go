@@ -64,8 +64,7 @@ type levelConfig struct {
 	texts     map[slog.Level][]byte
 }
 
-// newLevelConfig preformats each configured level, falling back to its slog name
-// when Text is empty. The threshold remains dynamic.
+// newLevelConfig preformats styled levels while retaining the dynamic threshold.
 func newLevelConfig(threshold slog.Leveler, styles map[slog.Level]LevelStyle, colored bool) levelConfig {
 	texts := make(map[slog.Level][]byte, len(styles))
 	for lv, style := range styles {
@@ -122,8 +121,7 @@ type labelConfig struct {
 	value  string
 }
 
-// newLabelConfig precomputes label decoration and padding.
-// An empty label discards its decoration.
+// newLabelConfig precomputes decoration and padding for a non-empty label.
 func newLabelConfig(label string, style LabelStyle, colored bool) labelConfig {
 	if label == "" {
 		return labelConfig{}

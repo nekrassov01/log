@@ -73,8 +73,7 @@ func (o *attrState) pushGroup(group string) {
 	o.path = append(o.path, '.')
 }
 
-// popGroup undoes pushGroup using the path length saved before the push.
-// Like pushGroup, it ignores an empty group name.
+// popGroup restores the saved path for a non-empty group.
 func (o *attrState) popGroup(group string, pathLen int) {
 	if group == "" {
 		return

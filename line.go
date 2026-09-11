@@ -15,8 +15,8 @@ type lineState struct {
 	wrote bool
 }
 
-// appendTime adds the timestamp and its decoration without escaping the layout.
-// The caller decides whether time output is enabled and the timestamp is non-zero.
+// appendTime adds an unescaped timestamp and its decoration.
+// The caller checks that time output is enabled and the timestamp is non-zero.
 func (o *lineState) appendTime(value time.Time, config *timeConfig) {
 	buf := o.appendSeparator()
 	buf = append(buf, config.prefix...)
@@ -160,8 +160,7 @@ func (o *lineState) appendNewline() {
 	o.buf = append(o.buf, '\n')
 }
 
-// appendSeparator returns the buffer with a space if output already precedes it.
-// The caller must store the returned slice; this method does not update buf or wrote.
+// appendSeparator returns a buffer with any required separator without updating state.
 func (o *lineState) appendSeparator() []byte {
 	if o.wrote {
 		return append(o.buf, sep)

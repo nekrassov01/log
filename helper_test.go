@@ -64,7 +64,7 @@ func (o *testWriter) Write(p []byte) (int, error) {
 	return n, o.err
 }
 
-// setupPCs supplies valid, distinct runtime locations without hard-coded addresses.
+// setupPCs captures distinct runtime locations.
 func setupPCs(t *testing.T) []uintptr {
 	t.Helper()
 	pcs := make([]uintptr, 2)
@@ -74,9 +74,8 @@ func setupPCs(t *testing.T) []uintptr {
 	return pcs
 }
 
-// setupConcurrentSourceValue returns a source-value selector for concurrent cache-miss tests.
-// It waits for both lookups before returning the file path, ensuring that both
-// miss the cache and attempt to publish an entry for the same location.
+// setupConcurrentSourceValue waits for two lookups before returning a source path,
+// forcing competing cache insertions for the same location.
 func setupConcurrentSourceValue(t *testing.T) func(*slog.Source) string {
 	t.Helper()
 	var calls atomic.Int32
@@ -184,8 +183,7 @@ func testDefaultStyle() *Style {
 	}
 }
 
-// testConfig constructs configuration for tests of its consumers.
-// Unlike NewCLIHandler, it requires every supplied option to have an apply function.
+// testConfig builds test configuration; options must have non-nil apply functions.
 func testConfig(colored bool, opts ...CLIHandlerOption) config {
 	o := newOption()
 	for _, opt := range opts {
@@ -194,7 +192,7 @@ func testConfig(colored bool, opts ...CLIHandlerOption) config {
 	return newConfig(&o, colored)
 }
 
-// testRecord fixes all record metadata instead of depending on the current time.
+// testRecord builds a record from explicit metadata and attributes.
 func testRecord(at time.Time, level slog.Level, message string, pc uintptr, attrs ...slog.Attr) slog.Record {
 	record := slog.NewRecord(at, level, message, pc)
 	record.AddAttrs(attrs...)
@@ -206,8 +204,7 @@ func testTime() time.Time {
 	return time.Unix(1, 123456789).UTC()
 }
 
-// testSource supplies one deterministic, already-cached source at PC 1.
-// Other non-zero program counters are unsupported because no selector is installed.
+// testSource caches a source at PC 1; other non-zero PCs are unsupported.
 func testSource(value string, line int) *source {
 	return &source{
 		entries: map[uintptr]*sourceEntry{
@@ -237,8 +234,7 @@ func testSourceText(pc uintptr, function bool) string {
 	return value + ":" + strconv.Itoa(frame.Line)
 }
 
-// testAttrCapture returns a callback that snapshots attributes and copies each path
-// before traversal reuses the path buffer.
+// testAttrCapture snapshots attributes and copies paths before their buffers are reused.
 func testAttrCapture(got *[]testAttr) func(slog.Attr, slog.Kind, []byte) {
 	return func(attr slog.Attr, kind slog.Kind, path []byte) {
 		*got = append(*got, testAttr{
@@ -336,7 +332,7 @@ func assertBacking[T any](t *testing.T, got, before []T, retained bool) {
 	}
 }
 
-// assertError preserves error identity, including a nil expected error.
+// assertError compares errors using errors.Is, including nil.
 func assertError(t *testing.T, got, want error) {
 	t.Helper()
 	if !errors.Is(got, want) {
