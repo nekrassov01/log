@@ -7,9 +7,6 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-// pad is the space used to align level and label text.
-const pad byte = ' '
-
 // config holds precomputed output settings shared by derived handlers.
 // The level threshold and attribute replacer may refer to caller-managed state.
 type config struct {
@@ -77,20 +74,7 @@ func newLevelConfig(threshold slog.Leveler, styles map[slog.Level]LevelStyle, co
 		color := style.Color
 		var text []byte
 		text = prefix.Color.appendText(text, prefix.Text, colored)
-		if style.Width > 0 {
-			left, right := align(name, style.Width)
-			text = color.appendPrefix(text, colored)
-			for range left {
-				text = append(text, pad)
-			}
-			text = append(text, name...)
-			for range right {
-				text = append(text, pad)
-			}
-			text = color.appendSuffix(text, colored)
-		} else {
-			text = color.appendText(text, name, colored)
-		}
+		text = color.appendText(text, pad(name, style.Width), colored)
 		text = suffix.Color.appendText(text, suffix.Text, colored)
 		texts[lv] = text
 	}
@@ -118,37 +102,27 @@ func newSourceConfig(style SourceStyle, value func(*slog.Source) string, colored
 }
 
 // labelConfig holds the encoded label configuration.
+// The value includes its padding, so the decoration does not depend on the label.
 type labelConfig struct {
 	prefix []byte
 	suffix []byte
 	value  string
+	width  int
 }
 
-// newLabelConfig precomputes decoration and padding for a non-empty label.
+// newLabelConfig compiles the label configuration.
+// An empty label keeps an empty value so that the label and its decoration are omitted.
 func newLabelConfig(label string, style LabelStyle, colored bool) labelConfig {
-	if label == "" {
-		return labelConfig{}
-	}
-	var prefix []byte
-	prefix = style.Prefix.Color.appendText(prefix, style.Prefix.Text, colored)
-	prefix = style.Color.appendPrefix(prefix, colored)
-	var suffix []byte
-	if style.Width > 0 {
-		left, right := align(label, style.Width)
-		for range left {
-			prefix = append(prefix, pad)
-		}
-		for range right {
-			suffix = append(suffix, pad)
-		}
-	}
-	suffix = style.Color.appendSuffix(suffix, colored)
-	suffix = style.Suffix.Color.appendText(suffix, style.Suffix.Text, colored)
-	return labelConfig{
+	prefix, suffix := encodeAffixes(style.Prefix, style.Suffix, style.Color, colored)
+	result := labelConfig{
 		prefix: prefix,
 		suffix: suffix,
-		value:  label,
+		width:  style.Width,
 	}
+	if label != "" {
+		result.value = pad(label, style.Width)
+	}
+	return result
 }
 
 // messageConfig holds the encoded message configuration.
@@ -216,4 +190,18 @@ func align(text string, width int) (int, int) {
 	}
 	left := padding / 2
 	return left, padding - left
+}
+
+// pad returns text centered within width display columns using align.
+func pad(text string, width int) string {
+	left, right := align(text, width)
+	buf := make([]byte, 0, left+len(text)+right)
+	for range left {
+		buf = append(buf, ' ')
+	}
+	buf = append(buf, text...)
+	for range right {
+		buf = append(buf, ' ')
+	}
+	return string(buf)
 }
