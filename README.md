@@ -97,7 +97,7 @@ The default minimum level is `INFO`. Time, source, and label output are opt-in; 
 
 Configure output, appearance, and attribute replacement through separate options:
 
-- Add `WithTime()`, `WithSourceFunction()` or `WithSourcePath()`, and `WithLabel()` for context.
+- Add `WithTime()`, `WithSourceFunction()` or `WithSourcePath()`, and `WithLabel()` for context. Use `CLIHandler.WithLabel()` to derive a handler with a different label.
 - Use `WithStyle(NewStyle(...))` to customize colors, affixes, level text, alignment, and attribute separators.
 - Use `WithAttrReplacer()` to redact, transform, or remove ordinary attributes, including nested ones.
 
@@ -114,6 +114,14 @@ handler := log.NewCLIHandler(os.Stdout,
 ```
 
 Built-in time, level, source, label, and message are styled separately and do not pass through the attribute replacer.
+
+To distinguish application logs from a library's logs, derive handlers with different labels. Derived handlers keep the other options and share the output lock:
+
+```go
+handler := log.NewCLIHandler(os.Stderr, log.WithTime())
+app := slog.New(handler.WithLabel("APP:"))
+sdk := slog.New(handler.WithLabel("SDK:"))
+```
 
 If a shared request logger attaches a `request_body` attribute that your application does not need, omit it at the handler:
 

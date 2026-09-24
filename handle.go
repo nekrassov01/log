@@ -20,9 +20,10 @@ var _ slog.Handler = (*CLIHandler)(nil)
 // CLIHandler implements [slog.Handler] for human-readable CLI output.
 // Create a handler with [NewCLIHandler]; the zero value is not ready for use.
 //
-// Its methods are safe for concurrent use. [CLIHandler.WithAttrs] and
-// [CLIHandler.WithGroup] preserve the original attributes and groups while sharing
-// the output lock and source cache. Separately constructed handlers use separate locks.
+// Its methods are safe for concurrent use. [CLIHandler.WithAttrs],
+// [CLIHandler.WithGroup], and [CLIHandler.WithLabel] preserve the original
+// attributes, groups, and label while sharing the output lock and source cache.
+// Separately constructed handlers use separate locks.
 type CLIHandler struct {
 	config config
 	attrs  []byte
@@ -135,5 +136,19 @@ func (o *CLIHandler) WithGroup(name string) slog.Handler {
 	h2.groups = make([]string, len(o.groups)+1)
 	copy(h2.groups, o.groups)
 	h2.groups[len(o.groups)] = name
+	return &h2
+}
+
+// WithLabel returns a handler that displays label before the message, replacing
+// any existing label. An empty label omits the label and its decoration.
+// The label keeps the receiver's [LabelStyle]. It is written verbatim and should
+// contain only trusted text.
+func (o *CLIHandler) WithLabel(label string) slog.Handler {
+	h2 := *o
+	var value string
+	if label != "" {
+		value = pad(label, o.config.label.width)
+	}
+	h2.config.label.value = value
 	return &h2
 }

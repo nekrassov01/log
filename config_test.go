@@ -337,6 +337,7 @@ func Test_newLabelConfig(t *testing.T) {
 		prefix string
 		value  string
 		suffix string
+		width  int
 	}
 	tests := []struct {
 		name string
@@ -358,6 +359,7 @@ func Test_newLabelConfig(t *testing.T) {
 			want: want{
 				prefix: "[\x1b[31m",
 				suffix: "\x1b[0m",
+				width:  10,
 			},
 		},
 		{
@@ -387,6 +389,7 @@ func Test_newLabelConfig(t *testing.T) {
 				prefix: "[",
 				value:  " APP  ",
 				suffix: "]",
+				width:  6,
 			},
 		},
 		{
@@ -403,6 +406,7 @@ func Test_newLabelConfig(t *testing.T) {
 				prefix: "\x1b[31m",
 				value:  " APP ",
 				suffix: "\x1b[0m",
+				width:  5,
 			},
 		},
 		{
@@ -430,6 +434,7 @@ func Test_newLabelConfig(t *testing.T) {
 			},
 			want: want{
 				value: "APP",
+				width: 1,
 			},
 		},
 	}
@@ -439,6 +444,7 @@ func Test_newLabelConfig(t *testing.T) {
 			assertBytes(t, got.prefix, test.want.prefix, "prefix")
 			assertValue(t, got.value, test.want.value, "label")
 			assertBytes(t, got.suffix, test.want.suffix, "suffix")
+			assertValue(t, got.width, test.want.width, "width")
 		})
 	}
 }

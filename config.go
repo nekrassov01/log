@@ -107,6 +107,7 @@ type labelConfig struct {
 	prefix []byte
 	suffix []byte
 	value  string
+	width  int
 }
 
 // newLabelConfig compiles the label configuration.
@@ -116,6 +117,7 @@ func newLabelConfig(label string, style LabelStyle, colored bool) labelConfig {
 	result := labelConfig{
 		prefix: prefix,
 		suffix: suffix,
+		width:  style.Width,
 	}
 	if label != "" {
 		result.value = pad(label, style.Width)

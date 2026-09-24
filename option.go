@@ -78,6 +78,7 @@ func WithSourceFunction() CLIHandlerOption {
 // WithLabel sets the label displayed before the message.
 // An empty label, the default, omits the label and its decoration.
 // The label is written verbatim and should contain only trusted text.
+// Use [CLIHandler.WithLabel] to derive a handler with a different label.
 func WithLabel(label string) CLIHandlerOption {
 	return CLIHandlerOption{
 		apply: func(o *option) {

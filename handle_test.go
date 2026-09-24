@@ -1403,3 +1403,174 @@ func TestCLIHandler_WithGroup_independent(t *testing.T) {
 		})
 	}
 }
+
+func TestCLIHandler_WithLabel(t *testing.T) {
+	type fields struct {
+		config config
+		attrs  []byte
+		groups []string
+		writer *writer
+		source *source
+	}
+	type args struct {
+		label string
+	}
+	type want struct {
+		prefix string
+		value  string
+		suffix string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   want
+	}{
+		{
+			name: "replace",
+			fields: fields{
+				config: testConfig(false, WithLabel("APP"), WithStyle(NewStyle(WithLabelStyle(LabelStyle{
+					Prefix: AffixStyle{
+						Text: "[",
+					},
+					Suffix: AffixStyle{
+						Text: "]",
+					},
+					Width: 5,
+				})))),
+				writer: &writer{
+					w:       io.Discard,
+					discard: true,
+				},
+				source: testSource("file", 1),
+				attrs:  []byte("cached=1"),
+				groups: []string{"base"},
+			},
+			args: args{
+				label: "SDK",
+			},
+			want: want{
+				prefix: "[",
+				value:  " SDK ",
+				suffix: "]",
+			},
+		},
+		{
+			name: "add to unlabeled",
+			fields: fields{
+				config: testConfig(false, WithStyle(NewStyle(WithLabelStyle(LabelStyle{
+					Suffix: AffixStyle{
+						Text: ":",
+					},
+				})))),
+				writer: &writer{
+					w:       io.Discard,
+					discard: true,
+				},
+			},
+			args: args{
+				label: "SDK",
+			},
+			want: want{
+				value:  "SDK",
+				suffix: ":",
+			},
+		},
+		{
+			name: "colored",
+			fields: fields{
+				config: testConfig(true, WithLabel("APP"), WithStyle(NewStyle(WithLabelStyle(LabelStyle{
+					Color: NewColor(CodeFgRed),
+				})))),
+				writer: &writer{
+					w:       io.Discard,
+					discard: true,
+				},
+			},
+			args: args{
+				label: "SDK",
+			},
+			want: want{
+				prefix: "\x1b[31m",
+				value:  "SDK",
+				suffix: "\x1b[0m",
+			},
+		},
+		{
+			name: "empty clears padded label",
+			fields: fields{
+				config: testConfig(false, WithLabel("APP"), WithStyle(NewStyle(WithLabelStyle(LabelStyle{
+					Width: 5,
+				})))),
+				writer: &writer{
+					w:       io.Discard,
+					discard: true,
+				},
+			},
+			args: args{
+				label: "",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			o := &CLIHandler{
+				config: test.fields.config,
+				attrs:  test.fields.attrs,
+				groups: test.fields.groups,
+				writer: test.fields.writer,
+				source: test.fields.source,
+			}
+			before := o.config.label
+			got := o.WithLabel(test.args.label).(*CLIHandler)
+			assertBytes(t, got.config.label.prefix, test.want.prefix, "prefix")
+			assertValue(t, got.config.label.value, test.want.value, "label")
+			assertBytes(t, got.config.label.suffix, test.want.suffix, "suffix")
+			assertValue(t, o.config.label, before, "original label")
+			assertValue(t, got == o, false, "same handler")
+			assertValue(t, got.writer == o.writer, true, "shared writer")
+			assertValue(t, got.source == o.source, true, "shared source")
+			assertValue(t, got.groups, o.groups, "groups")
+			assertBytes(t, got.attrs, string(o.attrs), "cached attrs")
+		})
+	}
+}
+
+func TestCLIHandler_WithLabel_independent(t *testing.T) {
+	type args struct {
+		labels []string
+	}
+	type want struct {
+		output string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "siblings share writer with independent labels",
+			args: args{
+				labels: []string{"APP:", "SDK:"},
+			},
+			want: want{
+				output: "INF APP: message\nINF SDK: message\nINF BASE: message\n",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			o := NewCLIHandler(buf, WithLabel("BASE:"))
+			var got []*CLIHandler
+			for _, label := range test.args.labels {
+				got = append(got, o.WithLabel(label).(*CLIHandler))
+			}
+			for _, handler := range append(got, o) {
+				err := handler.Handle(t.Context(), testRecord(time.Time{}, slog.LevelInfo, "message", 0))
+				assertError(t, err, nil)
+			}
+			assertBytes(t, buf.Bytes(), test.want.output, "output")
+		})
+	}
+}
