@@ -125,7 +125,7 @@ type SourceStyle struct {
 	Color  *Color
 }
 
-// LabelStyle decorates the text set by [WithLabel].
+// LabelStyle decorates the text set by [WithLabel] or [CLIHandler.WithLabel].
 // An empty label omits all decoration. Color applies to the label and padding.
 // Width sets the minimum label width, excluding affixes, without truncation.
 // Padding is centered with any extra column on the right; non-positive Width adds none.

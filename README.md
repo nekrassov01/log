@@ -91,14 +91,14 @@ The default-style output from [examples/main.go](./examples/main.go), shown on d
 
 ![Four log levels with CLI command details on a light background](./assets/examples/light.png)
 
-The default minimum level is `INFO`. Time, source, and label output are opt-in; the default output contains the level, message, and any attributes.
+The default minimum level is `INFO`. Time, source, and label output are opt-in. The default output contains the level, message, and any attributes.
 
 ## Customization
 
 Configure output, appearance, and attribute replacement through separate options:
 
 - Add `WithTime()`, `WithSourceFunction()` or `WithSourcePath()`, and `WithLabel()` for context. Use `CLIHandler.WithLabel()` to derive a handler with a different label.
-- Use `WithStyle(NewStyle(...))` to customize colors, affixes, level text, alignment, and attribute separators.
+- Use `WithStyle(NewStyle(...))` to customize colors, affixes, and attribute separators, along with level text and alignment.
 - Use `WithAttrReplacer()` to redact, transform, or remove ordinary attributes, including nested ones.
 
 For example, change the message color while keeping the remaining default styles:
@@ -113,7 +113,7 @@ handler := log.NewCLIHandler(os.Stdout,
 )
 ```
 
-Built-in time, level, source, label, and message are styled separately and do not pass through the attribute replacer.
+Built-in components are styled separately and do not pass through the attribute replacer. They are the time, level, and source, followed by the label and message.
 
 To distinguish application logs from a library's logs, derive handlers with different labels. Derived handlers keep the other options and share the output lock:
 
