@@ -1,4 +1,5 @@
-// Examples demonstrates the default and labeled styles with terminal-aware coloring.
+// Examples demonstrates the default and labeled styles and derived labels with
+// terminal-aware coloring.
 package main
 
 import (
@@ -83,5 +84,18 @@ func main() {
 	l.Info("info message")
 	l.Warn("warn message")
 	l.Error("error message")
+	println()
+
+	// Derive labeled handlers so application and SDK logs share one output and style.
+	c := log.NewCLIHandler(os.Stdout,
+		log.WithTime(),
+		log.WithLevel(slog.LevelDebug),
+	)
+	app := slog.New(c.WithLabel("APP:"))
+	sdk := slog.New(c.WithLabel("SDK:"))
+	app.Info("listing buckets", slog.String("region", "ap-northeast-1"))
+	sdk.Debug("sending request: ListBuckets")
+	sdk.Warn("retrying request: ListBuckets, attempt 2")
+	app.Info("listed buckets", slog.Int("count", 3))
 	println()
 }
