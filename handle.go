@@ -37,7 +37,7 @@ type CLIHandler struct {
 // By default, the handler uses [DefaultStyle] and a minimum level of [slog.LevelInfo],
 // with time, source, and label output disabled. Terminal detection requires an
 // *os.File; terminal output is adapted for Windows when needed.
-func NewCLIHandler(w io.Writer, opts ...CLIHandlerOption) slog.Handler {
+func NewCLIHandler(w io.Writer, opts ...CLIHandlerOption) *CLIHandler {
 	option := newOption()
 	for _, opt := range opts {
 		if opt.apply != nil {

@@ -144,7 +144,7 @@ func TestNewCLIHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := NewCLIHandler(test.args.w(t), test.args.opts...).(*CLIHandler)
+			got := NewCLIHandler(test.args.w(t), test.args.opts...)
 			assertValue(t, got.config.level.threshold, test.want.level, "level")
 			assertValue(t, got.config.time.layout, test.want.layout, "time layout")
 			assertValue(t, got.config.attr.timeLayout, test.want.layout, "attribute layout")
