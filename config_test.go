@@ -344,7 +344,7 @@ func Test_newLabelConfig(t *testing.T) {
 		want want
 	}{
 		{
-			name: "empty ignores decorations",
+			name: "empty keeps value empty",
 			args: args{
 				style: LabelStyle{
 					Prefix: AffixStyle{
@@ -354,6 +354,10 @@ func Test_newLabelConfig(t *testing.T) {
 					Width: 10,
 				},
 				colored: true,
+			},
+			want: want{
+				prefix: "[\x1b[31m",
+				suffix: "\x1b[0m",
 			},
 		},
 		{
@@ -380,9 +384,9 @@ func Test_newLabelConfig(t *testing.T) {
 				},
 			},
 			want: want{
-				prefix: "[ ",
-				value:  "APP",
-				suffix: "  ]",
+				prefix: "[",
+				value:  " APP  ",
+				suffix: "]",
 			},
 		},
 		{
@@ -396,9 +400,9 @@ func Test_newLabelConfig(t *testing.T) {
 				colored: true,
 			},
 			want: want{
-				prefix: "\x1b[31m ",
-				value:  "APP",
-				suffix: " \x1b[0m",
+				prefix: "\x1b[31m",
+				value:  " APP ",
+				suffix: "\x1b[0m",
 			},
 		},
 		{
@@ -725,6 +729,86 @@ func Test_align(t *testing.T) {
 			left, right := align(test.args.text, test.args.width)
 			assertValue(t, left, test.want.left, "left")
 			assertValue(t, right, test.want.right, "right")
+		})
+	}
+}
+
+func Test_pad(t *testing.T) {
+	type args struct {
+		text  string
+		width int
+	}
+	type want struct {
+		val string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "empty",
+			args: args{
+				width: 4,
+			},
+			want: want{
+				val: "    ",
+			},
+		},
+		{
+			name: "no width",
+			args: args{
+				text: "APP",
+			},
+			want: want{
+				val: "APP",
+			},
+		},
+		{
+			name: "width too small",
+			args: args{
+				text:  "APP",
+				width: 2,
+			},
+			want: want{
+				val: "APP",
+			},
+		},
+		{
+			name: "even padding",
+			args: args{
+				text:  "APP",
+				width: 5,
+			},
+			want: want{
+				val: " APP ",
+			},
+		},
+		{
+			name: "odd padding",
+			args: args{
+				text:  "APP",
+				width: 6,
+			},
+			want: want{
+				val: " APP  ",
+			},
+		},
+		{
+			name: "wide characters",
+			args: args{
+				text:  "日本",
+				width: 6,
+			},
+			want: want{
+				val: " 日本 ",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := pad(test.args.text, test.args.width)
+			assertValue(t, got, test.want.val, "text")
 		})
 	}
 }
