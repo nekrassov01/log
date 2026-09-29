@@ -12,7 +12,7 @@ BIN_BUMP := github.com/x-motemen/gobump/cmd/gobump@latest
 
 export GO111MODULE=on
 
-.PHONY: deps deps-lint deps-vuln deps-bump clean build check test cover bench lint vuln version check-git check-branch bump
+.PHONY: deps deps-lint deps-vuln deps-bump clean check test cover bench lint vuln version check-git check-branch bump
 
 # -------
 #  deps
@@ -41,7 +41,7 @@ endif
 
 clean:
 	go clean
-	rm -f $(NAME) coverage.out coverage.html cpu.prof mem.prof $(NAME).test
+	rm -f coverage.out coverage.html
 	@cd benchmarks && $(MAKE) clean
 
 # --------

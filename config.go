@@ -69,13 +69,11 @@ func newLevelConfig(threshold slog.Leveler, styles map[slog.Level]LevelStyle, co
 		if name == "" {
 			name = lv.String()
 		}
-		prefix := style.Prefix
-		suffix := style.Suffix
-		color := style.Color
+		prefix, suffix := encodeAffixes(style.Prefix, style.Suffix, style.Color, colored)
 		var text []byte
-		text = prefix.Color.appendText(text, prefix.Text, colored)
-		text = color.appendText(text, pad(name, style.Width), colored)
-		text = suffix.Color.appendText(text, suffix.Text, colored)
+		text = append(text, prefix...)
+		text = append(text, pad(name, style.Width)...)
+		text = append(text, suffix...)
 		texts[lv] = text
 	}
 	return levelConfig{
@@ -153,20 +151,15 @@ type attrConfig struct {
 
 // newAttrConfig compiles the ordinary attribute configuration.
 func newAttrConfig(style AttrStyle, replacer AttrReplacer, layout string, colored bool) attrConfig {
-	result := attrConfig{
-		replacer:   replacer,
-		separator:  style.Separator,
-		timeLayout: layout,
+	return attrConfig{
+		replacer:    replacer,
+		separator:   style.Separator,
+		timeLayout:  layout,
+		keyPrefix:   style.KeyColor.appendPrefix(nil, colored),
+		keySuffix:   style.KeyColor.appendSuffix(nil, colored),
+		valuePrefix: style.ValueColor.appendPrefix(nil, colored),
+		valueSuffix: style.ValueColor.appendSuffix(nil, colored),
 	}
-	if colored && style.KeyColor != nil {
-		result.keyPrefix = style.KeyColor.prefix
-		result.keySuffix = style.KeyColor.suffix
-	}
-	if colored && style.ValueColor != nil {
-		result.valuePrefix = style.ValueColor.prefix
-		result.valueSuffix = style.ValueColor.suffix
-	}
-	return result
 }
 
 // encodeAffixes returns the bytes before and after a dynamic value.
