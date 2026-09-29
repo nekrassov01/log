@@ -64,10 +64,7 @@ type Color struct {
 // Codes are used in the given order without validation. Passing no codes disables coloring.
 func NewColor(codes ...int) *Color {
 	if len(codes) == 0 {
-		return &Color{
-			prefix: nil,
-			suffix: nil,
-		}
+		return &Color{}
 	}
 	return &Color{
 		prefix: buildSGR(codes),
