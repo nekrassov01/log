@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.0.3](https://github.com/nekrassov01/log/compare/v0.0.2...v0.0.3) - 2026-09-29
+
+- Reorder struct fields to reduce pointer scan range by @nekrassov01 in https://github.com/nekrassov01/log/pull/8
+- Tidy up the codebase by @nekrassov01 in https://github.com/nekrassov01/log/pull/10
+
 ## [v0.0.2](https://github.com/nekrassov01/log/compare/v0.0.1...v0.0.2) - 2026-09-24
 
 - Add WithLabel for deriving labeled handlers by @nekrassov01 in https://github.com/nekrassov01/log/pull/5
