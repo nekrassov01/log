@@ -13,9 +13,9 @@ import (
 type source struct {
 	// last avoids the map lock for repeated calls from the same location.
 	last    atomic.Pointer[sourceEntry]
-	mu      sync.RWMutex
 	entries map[uintptr]*sourceEntry
 	value   func(*slog.Source) string
+	mu      sync.RWMutex
 }
 
 // newSource binds a value selector to a cache, or returns nil when disabled.
@@ -71,8 +71,8 @@ func (o *source) resolve(pc uintptr) []byte {
 
 // sourceEntry associates a program counter with its formatted source text.
 type sourceEntry struct {
-	pc   uintptr
 	text []byte
+	pc   uintptr
 }
 
 // newSourceEntry escapes the source value and includes its line inside any quotes.
@@ -87,7 +87,7 @@ func newSourceEntry(pc uintptr, value string, line int) *sourceEntry {
 		text = append(text, '"')
 	}
 	return &sourceEntry{
-		pc:   pc,
 		text: text,
+		pc:   pc,
 	}
 }

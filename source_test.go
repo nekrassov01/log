@@ -97,17 +97,17 @@ func Test_source_resolve(t *testing.T) {
 			fields: fields{
 				entries: map[uintptr]*sourceEntry{
 					1: {
-						pc:   1,
 						text: []byte("one"),
+						pc:   1,
 					},
 					2: {
-						pc:   2,
 						text: []byte("two"),
+						pc:   2,
 					},
 				},
 				last: &sourceEntry{
-					pc:   1,
 					text: []byte("one"),
+					pc:   1,
 				},
 				value: func(*slog.Source) string {
 					panic("selector called on cache hit")

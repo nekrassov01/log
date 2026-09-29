@@ -159,11 +159,11 @@ func TestNewCLIHandler(t *testing.T) {
 
 func TestCLIHandler_Enabled(t *testing.T) {
 	type fields struct {
+		writer *writer
+		source *source
 		config config
 		attrs  []byte
 		groups []string
-		writer *writer
-		source *source
 	}
 	type args struct {
 		ctx   context.Context
@@ -255,11 +255,11 @@ func TestCLIHandler_Enabled(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			o := &CLIHandler{
+				writer: test.fields.writer,
+				source: test.fields.source,
 				config: test.fields.config,
 				attrs:  test.fields.attrs,
 				groups: test.fields.groups,
-				writer: test.fields.writer,
-				source: test.fields.source,
 			}
 			got := o.Enabled(test.args.ctx, test.args.level)
 			assertValue(t, got, test.want.val, "enabled")
@@ -319,11 +319,11 @@ func TestCLIHandler_Enabled_dynamic(t *testing.T) {
 
 func TestCLIHandler_Handle(t *testing.T) {
 	type fields struct {
+		writer *writer
+		source *source
 		config config
 		attrs  []byte
 		groups []string
-		writer *writer
-		source *source
 	}
 	type args struct {
 		ctx    context.Context
@@ -342,10 +342,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "message",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "message", 0),
@@ -360,10 +360,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "empty message",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "", 0),
@@ -378,10 +378,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "custom unstyled level",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.Level(-8), "message", 0),
@@ -396,10 +396,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "time zero omitted",
 			fields: fields{
-				config: testConfig(false, WithTime()),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false, WithTime()),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "message", 0),
@@ -414,11 +414,11 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "source PC zero omitted",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
 				source: testSource("file.go", 83),
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "message", 0),
@@ -433,11 +433,11 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "all built-ins order",
 			fields: fields{
-				config: testConfig(false, WithTime(), WithLabel("APP")),
 				writer: &writer{
 					w: &testWriter{},
 				},
 				source: testSource("/src/main.go", 83),
+				config: testConfig(false, WithTime(), WithLabel("APP")),
 			},
 			args: args{
 				record: testRecord(testTime(), slog.LevelInfo, "message", 1, slog.Int("version", 1)),
@@ -452,11 +452,11 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "quoted source",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
 				source: testSource("a b.go", 83),
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "message", 1),
@@ -471,10 +471,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "empty group attr",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "message", 0, slog.Group("g")),
@@ -489,10 +489,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "cached before record attrs",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 				attrs:  []byte("before=1"),
 				groups: []string{"g"},
 			},
@@ -509,10 +509,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "nested and inline groups",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 				groups: []string{"base"},
 			},
 			args: args{
@@ -528,13 +528,13 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "replacer excludes built-ins",
 			fields: fields{
-				config: testConfig(false, WithTime(), WithLabel("APP"), WithAttrReplacer(func(_ []string, a slog.Attr) slog.Attr {
-					return slog.String(a.Key, "replaced")
-				})),
 				writer: &writer{
 					w: &testWriter{},
 				},
 				source: testSource("file.go", 83),
+				config: testConfig(false, WithTime(), WithLabel("APP"), WithAttrReplacer(func(_ []string, a slog.Attr) slog.Attr {
+					return slog.String(a.Key, "replaced")
+				})),
 			},
 			args: args{
 				record: testRecord(testTime(), slog.LevelInfo, "message", 1, slog.Int("k", 1)),
@@ -549,12 +549,12 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "writer error",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{
 						err: testError(),
 					},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "message", 0),
@@ -569,10 +569,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "large message",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, strings.Repeat("m", 65537), 0),
@@ -587,10 +587,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "message controls",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "a\n\x1bb", 0),
@@ -605,10 +605,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "punctuation message",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, `message="value" C:\path`, 0),
@@ -623,10 +623,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "unsafe attr and group",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 				groups: []string{"user group"},
 			},
 			args: args{
@@ -642,10 +642,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "Japanese",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "日本語", 0, slog.String("名前", "日本語�"), slog.String("empty", "")),
@@ -660,10 +660,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "invalid UTF-8",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 				groups: []string{"g\xff"},
 			},
 			args: args{
@@ -679,10 +679,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "unicode nonprinting",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(time.Time{}, slog.LevelInfo, "a\u2028b", 0, slog.String("k", "a\u00a0b")),
@@ -697,6 +697,9 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "colored escaping",
 			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
 				config: testConfig(true, WithStyle(DefaultStyle().With(WithMessageStyle(MessageStyle{
 					Color: NewColor(CodeFgGreen),
 				}), WithAttrStyle(AttrStyle{
@@ -704,9 +707,6 @@ func TestCLIHandler_Handle(t *testing.T) {
 					KeyColor:   NewColor(CodeFgHiBlack),
 					ValueColor: NewColor(CodeFgRed),
 				})))),
-				writer: &writer{
-					w: &testWriter{},
-				},
 				groups: []string{"g\n"},
 			},
 			args: args{
@@ -722,10 +722,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "layout default time false",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				record: testRecord(testTime(), slog.LevelInfo, "message", 0, slog.Time("at", testTime())),
@@ -740,10 +740,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "layout default time true",
 			fields: fields{
-				config: testConfig(false, WithTime()),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false, WithTime()),
 			},
 			args: args{
 				record: testRecord(testTime(), slog.LevelInfo, "message", 0, slog.Time("at", testTime())),
@@ -758,10 +758,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "layout nano time false",
 			fields: fields{
-				config: testConfig(false, WithTimeLayout(time.RFC3339Nano)),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false, WithTimeLayout(time.RFC3339Nano)),
 			},
 			args: args{
 				record: testRecord(testTime(), slog.LevelInfo, "message", 0, slog.Time("at", testTime())),
@@ -776,10 +776,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "layout nano time true",
 			fields: fields{
-				config: testConfig(false, WithTime(), WithTimeLayout(time.RFC3339Nano)),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false, WithTime(), WithTimeLayout(time.RFC3339Nano)),
 			},
 			args: args{
 				record: testRecord(testTime(), slog.LevelInfo, "message", 0, slog.Time("at", testTime())),
@@ -794,10 +794,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "layout space time false",
 			fields: fields{
-				config: testConfig(false, WithTimeLayout(time.DateTime)),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false, WithTimeLayout(time.DateTime)),
 			},
 			args: args{
 				record: testRecord(testTime(), slog.LevelInfo, "message", 0, slog.Time("at", testTime())),
@@ -812,10 +812,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "layout space time true",
 			fields: fields{
-				config: testConfig(false, WithTime(), WithTimeLayout(time.DateTime)),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false, WithTime(), WithTimeLayout(time.DateTime)),
 			},
 			args: args{
 				record: testRecord(testTime(), slog.LevelInfo, "message", 0, slog.Time("at", testTime())),
@@ -830,10 +830,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "large line and deep inherited path",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false),
 				groups: testLargeGroups(),
 			},
 			args: args{
@@ -849,10 +849,10 @@ func TestCLIHandler_Handle(t *testing.T) {
 		{
 			name: "trusted time layout and escaped time attribute",
 			fields: fields{
-				config: testConfig(false, WithTime(), WithTimeLayout("15:04\n\x1b[0m")),
 				writer: &writer{
 					w: &testWriter{},
 				},
+				config: testConfig(false, WithTime(), WithTimeLayout("15:04\n\x1b[0m")),
 			},
 			args: args{
 				record: testRecord(testTime(), slog.LevelInfo, "message", 0, slog.Time("at", testTime())),
@@ -868,11 +868,11 @@ func TestCLIHandler_Handle(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			o := &CLIHandler{
+				writer: test.fields.writer,
+				source: test.fields.source,
 				config: test.fields.config,
 				attrs:  test.fields.attrs,
 				groups: test.fields.groups,
-				writer: test.fields.writer,
-				source: test.fields.source,
 			}
 			w := o.writer.w.(*testWriter)
 			wantErr := test.want.err(w)
@@ -885,11 +885,11 @@ func TestCLIHandler_Handle(t *testing.T) {
 
 func TestCLIHandler_WithAttrs(t *testing.T) {
 	type fields struct {
+		writer *writer
+		source *source
 		config config
 		attrs  []byte
 		groups []string
-		writer *writer
-		source *source
 	}
 	type args struct {
 		attrs []slog.Attr
@@ -907,12 +907,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "nil attrs",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 			},
 			want: want{
 				same: true,
@@ -921,12 +921,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "empty attrs",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 			},
 			args: args{
 				attrs: []slog.Attr{},
@@ -938,12 +938,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "ordinary",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 			},
 			args: args{
 				attrs: []slog.Attr{slog.Int("k", 1)},
@@ -955,12 +955,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "empty attr",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 			},
 			args: args{
 				attrs: []slog.Attr{{}},
@@ -969,12 +969,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "empty group",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 			},
 			args: args{
 				attrs: []slog.Attr{slog.Group("g")},
@@ -983,12 +983,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "append cache with group",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 				attrs:  []byte("before=1"),
 				groups: []string{"g"},
 			},
@@ -1002,12 +1002,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "nested escaped",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 				groups: []string{"base group"},
 			},
 			args: args{
@@ -1020,14 +1020,14 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "replacement",
 			fields: fields{
-				config: testConfig(false, WithAttrReplacer(func(_ []string, a slog.Attr) slog.Attr {
-					return slog.String(a.Key, "redacted")
-				})),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false, WithAttrReplacer(func(_ []string, a slog.Attr) slog.Attr {
+					return slog.String(a.Key, "redacted")
+				})),
 			},
 			args: args{
 				attrs: []slog.Attr{slog.String("password", "secret")},
@@ -1039,12 +1039,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "large attribute",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 			},
 			args: args{
 				attrs: []slog.Attr{slog.String("k", strings.Repeat("x", 65537))},
@@ -1056,12 +1056,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "long path",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 				groups: []string{strings.Repeat("g", 4097)},
 			},
 			args: args{
@@ -1074,12 +1074,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "time time.RFC3339Nano",
 			fields: fields{
-				config: testConfig(false, WithTimeLayout(time.RFC3339Nano)),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false, WithTimeLayout(time.RFC3339Nano)),
 			},
 			args: args{
 				attrs: []slog.Attr{slog.Time("at", testTime())},
@@ -1091,12 +1091,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "time time.DateTime",
 			fields: fields{
-				config: testConfig(false, WithTimeLayout(time.DateTime)),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false, WithTimeLayout(time.DateTime)),
 			},
 			args: args{
 				attrs: []slog.Attr{slog.Time("at", testTime())},
@@ -1108,12 +1108,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "time time.Kitchen",
 			fields: fields{
-				config: testConfig(false, WithTimeLayout(time.Kitchen)),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false, WithTimeLayout(time.Kitchen)),
 			},
 			args: args{
 				attrs: []slog.Attr{slog.Time("at", testTime())},
@@ -1125,12 +1125,12 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "deep inherited path",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 				groups: testLargeGroups(),
 			},
 			args: args{
@@ -1143,11 +1143,11 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 		{
 			name: "cached control characters",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
+				config: testConfig(false),
 			},
 			args: args{
 				attrs: []slog.Attr{slog.String("a\n", "b\x1b"), slog.Any("error", testError()), slog.String("invalid", "\xff")},
@@ -1160,11 +1160,11 @@ func TestCLIHandler_WithAttrs(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			o := &CLIHandler{
+				writer: test.fields.writer,
+				source: test.fields.source,
 				config: test.fields.config,
 				attrs:  test.fields.attrs,
 				groups: test.fields.groups,
-				writer: test.fields.writer,
-				source: test.fields.source,
 			}
 			before := string(o.attrs)
 			got := o.WithAttrs(test.args.attrs).(*CLIHandler)
@@ -1239,11 +1239,11 @@ func TestCLIHandler_WithAttrs_independent(t *testing.T) {
 
 func TestCLIHandler_WithGroup(t *testing.T) {
 	type fields struct {
+		writer *writer
+		source *source
 		config config
 		attrs  []byte
 		groups []string
-		writer *writer
-		source *source
 	}
 	type args struct {
 		name string
@@ -1261,12 +1261,12 @@ func TestCLIHandler_WithGroup(t *testing.T) {
 		{
 			name: "empty name",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 				attrs:  []byte("cached=1"),
 				groups: []string{"base"},
 			},
@@ -1278,12 +1278,12 @@ func TestCLIHandler_WithGroup(t *testing.T) {
 		{
 			name: "first",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 				attrs:  []byte("cached=1"),
 			},
 			args: args{
@@ -1296,12 +1296,12 @@ func TestCLIHandler_WithGroup(t *testing.T) {
 		{
 			name: "nested",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 				attrs:  []byte("cached=1"),
 				groups: []string{"a"},
 			},
@@ -1315,12 +1315,12 @@ func TestCLIHandler_WithGroup(t *testing.T) {
 		{
 			name: "retain original name",
 			fields: fields{
-				config: testConfig(false),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
 				source: testSource("file", 1),
+				config: testConfig(false),
 				attrs:  []byte("cached=1"),
 			},
 			args: args{
@@ -1334,11 +1334,11 @@ func TestCLIHandler_WithGroup(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			o := &CLIHandler{
+				writer: test.fields.writer,
+				source: test.fields.source,
 				config: test.fields.config,
 				attrs:  test.fields.attrs,
 				groups: test.fields.groups,
-				writer: test.fields.writer,
-				source: test.fields.source,
 			}
 			before := append([]string(nil), o.groups...)
 			got := o.WithGroup(test.args.name).(*CLIHandler)
@@ -1406,18 +1406,18 @@ func TestCLIHandler_WithGroup_independent(t *testing.T) {
 
 func TestCLIHandler_WithLabel(t *testing.T) {
 	type fields struct {
+		writer *writer
+		source *source
 		config config
 		attrs  []byte
 		groups []string
-		writer *writer
-		source *source
 	}
 	type args struct {
 		label string
 	}
 	type want struct {
-		prefix string
 		value  string
+		prefix string
 		suffix string
 	}
 	tests := []struct {
@@ -1429,6 +1429,11 @@ func TestCLIHandler_WithLabel(t *testing.T) {
 		{
 			name: "replace",
 			fields: fields{
+				writer: &writer{
+					w:       io.Discard,
+					discard: true,
+				},
+				source: testSource("file", 1),
 				config: testConfig(false, WithLabel("APP"), WithStyle(NewStyle(WithLabelStyle(LabelStyle{
 					Prefix: AffixStyle{
 						Text: "[",
@@ -1438,11 +1443,6 @@ func TestCLIHandler_WithLabel(t *testing.T) {
 					},
 					Width: 5,
 				})))),
-				writer: &writer{
-					w:       io.Discard,
-					discard: true,
-				},
-				source: testSource("file", 1),
 				attrs:  []byte("cached=1"),
 				groups: []string{"base"},
 			},
@@ -1450,23 +1450,23 @@ func TestCLIHandler_WithLabel(t *testing.T) {
 				label: "SDK",
 			},
 			want: want{
-				prefix: "[",
 				value:  " SDK ",
+				prefix: "[",
 				suffix: "]",
 			},
 		},
 		{
 			name: "add to unlabeled",
 			fields: fields{
+				writer: &writer{
+					w:       io.Discard,
+					discard: true,
+				},
 				config: testConfig(false, WithStyle(NewStyle(WithLabelStyle(LabelStyle{
 					Suffix: AffixStyle{
 						Text: ":",
 					},
 				})))),
-				writer: &writer{
-					w:       io.Discard,
-					discard: true,
-				},
 			},
 			args: args{
 				label: "SDK",
@@ -1479,33 +1479,33 @@ func TestCLIHandler_WithLabel(t *testing.T) {
 		{
 			name: "colored",
 			fields: fields{
-				config: testConfig(true, WithLabel("APP"), WithStyle(NewStyle(WithLabelStyle(LabelStyle{
-					Color: NewColor(CodeFgRed),
-				})))),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
+				config: testConfig(true, WithLabel("APP"), WithStyle(NewStyle(WithLabelStyle(LabelStyle{
+					Color: NewColor(CodeFgRed),
+				})))),
 			},
 			args: args{
 				label: "SDK",
 			},
 			want: want{
-				prefix: "\x1b[31m",
 				value:  "SDK",
+				prefix: "\x1b[31m",
 				suffix: "\x1b[0m",
 			},
 		},
 		{
 			name: "empty clears padded label",
 			fields: fields{
-				config: testConfig(false, WithLabel("APP"), WithStyle(NewStyle(WithLabelStyle(LabelStyle{
-					Width: 5,
-				})))),
 				writer: &writer{
 					w:       io.Discard,
 					discard: true,
 				},
+				config: testConfig(false, WithLabel("APP"), WithStyle(NewStyle(WithLabelStyle(LabelStyle{
+					Width: 5,
+				})))),
 			},
 			args: args{
 				label: "",
@@ -1515,16 +1515,16 @@ func TestCLIHandler_WithLabel(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			o := &CLIHandler{
+				writer: test.fields.writer,
+				source: test.fields.source,
 				config: test.fields.config,
 				attrs:  test.fields.attrs,
 				groups: test.fields.groups,
-				writer: test.fields.writer,
-				source: test.fields.source,
 			}
 			before := o.config.label
 			got := o.WithLabel(test.args.label).(*CLIHandler)
-			assertBytes(t, got.config.label.prefix, test.want.prefix, "prefix")
 			assertValue(t, got.config.label.value, test.want.value, "label")
+			assertBytes(t, got.config.label.prefix, test.want.prefix, "prefix")
 			assertBytes(t, got.config.label.suffix, test.want.suffix, "suffix")
 			assertValue(t, o.config.label, before, "original label")
 			assertValue(t, got == o, false, "same handler")

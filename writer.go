@@ -11,8 +11,8 @@ import (
 
 // writer serializes output from a handler and its derivatives through one lock.
 type writer struct {
-	mu       sync.Mutex
 	w        io.Writer
+	mu       sync.Mutex
 	terminal bool
 	discard  bool
 }

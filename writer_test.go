@@ -11,8 +11,8 @@ func Test_newWriter(t *testing.T) {
 		w func(*testing.T) io.Writer
 	}
 	type want struct {
-		discard  bool
 		terminal bool
+		discard  bool
 	}
 	tests := []struct {
 		name string
@@ -74,9 +74,9 @@ func Test_newWriter(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := newWriter(test.args.w(t))
-			assertValue(t, got.discard, test.want.discard, "discard")
-			assertValue(t, got.terminal, test.want.terminal, "terminal")
 			assertValue(t, got.w != nil, true, "writer available")
+			assertValue(t, got.terminal, test.want.terminal, "terminal")
+			assertValue(t, got.discard, test.want.discard, "discard")
 		})
 	}
 }

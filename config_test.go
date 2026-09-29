@@ -37,14 +37,14 @@ func Test_newConfig(t *testing.T) {
 			name: "custom",
 			args: args{
 				option: option{
-					level:      slog.LevelWarn,
-					label:      "APP",
-					hasTime:    true,
-					timeLayout: time.Kitchen,
+					level: slog.LevelWarn,
 					source: func(s *slog.Source) string {
 						return s.Function
 					},
-					style: DefaultStyle(),
+					style:      DefaultStyle(),
+					label:      "APP",
+					timeLayout: time.Kitchen,
+					hasTime:    true,
 				},
 				colored: true,
 			},
@@ -78,9 +78,9 @@ func Test_newTimeConfig(t *testing.T) {
 		colored bool
 	}
 	type want struct {
+		layout  string
 		prefix  string
 		suffix  string
-		layout  string
 		enabled bool
 	}
 	tests := []struct {
@@ -95,21 +95,21 @@ func Test_newTimeConfig(t *testing.T) {
 			name: "decorated without color",
 			args: args{
 				style: TimeStyle{
+					Color: NewColor(CodeFgRed),
 					Prefix: AffixStyle{
 						Text: "<",
 					},
 					Suffix: AffixStyle{
 						Text: ">",
 					},
-					Color: NewColor(CodeFgRed),
 				},
 				layout:  time.RFC3339,
 				enabled: true,
 			},
 			want: want{
+				layout:  time.RFC3339,
 				prefix:  "<",
 				suffix:  ">",
-				layout:  time.RFC3339,
 				enabled: true,
 			},
 		},
@@ -117,13 +117,13 @@ func Test_newTimeConfig(t *testing.T) {
 			name: "colored",
 			args: args{
 				style: TimeStyle{
+					Color: NewColor(CodeFgRed),
 					Prefix: AffixStyle{
 						Text: "<",
 					},
 					Suffix: AffixStyle{
 						Text: ">",
 					},
-					Color: NewColor(CodeFgRed),
 				},
 				colored: true,
 			},
@@ -136,9 +136,9 @@ func Test_newTimeConfig(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := newTimeConfig(test.args.style, test.args.layout, test.args.enabled, test.args.colored)
+			assertValue(t, got.layout, test.want.layout, "layout")
 			assertBytes(t, got.prefix, test.want.prefix, "prefix")
 			assertBytes(t, got.suffix, test.want.suffix, "suffix")
-			assertValue(t, got.layout, test.want.layout, "layout")
 			assertValue(t, got.enabled, test.want.enabled, "enabled")
 		})
 	}
@@ -191,14 +191,14 @@ func Test_newLevelConfig(t *testing.T) {
 			args: args{
 				styles: map[slog.Level]LevelStyle{
 					slog.LevelInfo: {
-						Text:  "I",
-						Width: 4,
 						Prefix: AffixStyle{
 							Text: "[",
 						},
 						Suffix: AffixStyle{
 							Text: "]",
 						},
+						Text:  "I",
+						Width: 4,
 					},
 				},
 			},
@@ -211,9 +211,9 @@ func Test_newLevelConfig(t *testing.T) {
 			args: args{
 				styles: map[slog.Level]LevelStyle{
 					slog.LevelInfo: {
+						Color: NewColor(CodeFgRed),
 						Text:  "I",
 						Width: 3,
-						Color: NewColor(CodeFgRed),
 					},
 				},
 				colored: true,
@@ -274,13 +274,13 @@ func Test_newSourceConfig(t *testing.T) {
 			name: "decorated without color",
 			args: args{
 				style: SourceStyle{
+					Color: NewColor(CodeFgRed),
 					Prefix: AffixStyle{
 						Text: "<",
 					},
 					Suffix: AffixStyle{
 						Text: ">",
 					},
-					Color: NewColor(CodeFgRed),
 				},
 				value: func(s *slog.Source) string {
 					return s.File
@@ -296,13 +296,13 @@ func Test_newSourceConfig(t *testing.T) {
 			name: "colored",
 			args: args{
 				style: SourceStyle{
+					Color: NewColor(CodeFgRed),
 					Prefix: AffixStyle{
 						Text: "<",
 					},
 					Suffix: AffixStyle{
 						Text: ">",
 					},
-					Color: NewColor(CodeFgRed),
 				},
 				colored: true,
 				value: func(s *slog.Source) string {
@@ -334,8 +334,8 @@ func Test_newLabelConfig(t *testing.T) {
 		colored bool
 	}
 	type want struct {
-		prefix string
 		value  string
+		prefix string
 		suffix string
 		width  int
 	}
@@ -348,10 +348,10 @@ func Test_newLabelConfig(t *testing.T) {
 			name: "empty keeps value empty",
 			args: args{
 				style: LabelStyle{
+					Color: NewColor(CodeFgRed),
 					Prefix: AffixStyle{
 						Text: "[",
 					},
-					Color: NewColor(CodeFgRed),
 					Width: 10,
 				},
 				colored: true,
@@ -386,8 +386,8 @@ func Test_newLabelConfig(t *testing.T) {
 				},
 			},
 			want: want{
-				prefix: "[",
 				value:  " APP  ",
+				prefix: "[",
 				suffix: "]",
 				width:  6,
 			},
@@ -403,8 +403,8 @@ func Test_newLabelConfig(t *testing.T) {
 				colored: true,
 			},
 			want: want{
-				prefix: "\x1b[31m",
 				value:  " APP ",
+				prefix: "\x1b[31m",
 				suffix: "\x1b[0m",
 				width:  5,
 			},
@@ -419,8 +419,8 @@ func Test_newLabelConfig(t *testing.T) {
 				colored: true,
 			},
 			want: want{
-				prefix: "\x1b[31m",
 				value:  "APP",
+				prefix: "\x1b[31m",
 				suffix: "\x1b[0m",
 			},
 		},
@@ -441,8 +441,8 @@ func Test_newLabelConfig(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			got := newLabelConfig(test.args.label, test.args.style, test.args.colored)
-			assertBytes(t, got.prefix, test.want.prefix, "prefix")
 			assertValue(t, got.value, test.want.value, "label")
+			assertBytes(t, got.prefix, test.want.prefix, "prefix")
 			assertBytes(t, got.suffix, test.want.suffix, "suffix")
 			assertValue(t, got.width, test.want.width, "width")
 		})
@@ -470,13 +470,13 @@ func Test_newMessageConfig(t *testing.T) {
 			name: "decorated without color",
 			args: args{
 				style: MessageStyle{
+					Color: NewColor(CodeFgRed),
 					Prefix: AffixStyle{
 						Text: "<",
 					},
 					Suffix: AffixStyle{
 						Text: ">",
 					},
-					Color: NewColor(CodeFgRed),
 				},
 			},
 			want: want{
@@ -488,13 +488,13 @@ func Test_newMessageConfig(t *testing.T) {
 			name: "colored",
 			args: args{
 				style: MessageStyle{
+					Color: NewColor(CodeFgRed),
 					Prefix: AffixStyle{
 						Text: "<",
 					},
 					Suffix: AffixStyle{
 						Text: ">",
 					},
-					Color: NewColor(CodeFgRed),
 				},
 				colored: true,
 			},
@@ -604,12 +604,12 @@ func Test_encodeAffixes(t *testing.T) {
 			name: "disabled",
 			args: args{
 				prefix: AffixStyle{
-					Text:  "<",
 					Color: NewColor(CodeFgRed),
+					Text:  "<",
 				},
 				suffix: AffixStyle{
-					Text:  ">",
 					Color: NewColor(CodeFgGreen),
+					Text:  ">",
 				},
 				color: NewColor(CodeBold),
 			},
@@ -622,12 +622,12 @@ func Test_encodeAffixes(t *testing.T) {
 			name: "colored",
 			args: args{
 				prefix: AffixStyle{
-					Text:  "<",
 					Color: NewColor(CodeFgRed),
+					Text:  "<",
 				},
 				suffix: AffixStyle{
-					Text:  ">",
 					Color: NewColor(CodeFgGreen),
+					Text:  ">",
 				},
 				color:   NewColor(CodeBold),
 				enabled: true,

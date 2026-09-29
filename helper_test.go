@@ -146,32 +146,32 @@ func testDefaultStyle() *Style {
 	return &Style{
 		level: map[slog.Level]LevelStyle{
 			slog.LevelDebug: {
-				Text:  "DBG",
 				Color: NewColor(38, 2, 95, 95, 255, CodeBold),
+				Text:  "DBG",
 			},
 			slog.LevelInfo: {
-				Text:  "INF",
 				Color: NewColor(38, 2, 95, 255, 215, CodeBold),
+				Text:  "INF",
 			},
 			slog.LevelWarn: {
-				Text:  "WRN",
 				Color: NewColor(38, 2, 215, 255, 135, CodeBold),
+				Text:  "WRN",
 			},
 			slog.LevelError: {
-				Text:  "ERR",
 				Color: NewColor(38, 2, 255, 95, 135, CodeBold),
+				Text:  "ERR",
 			},
 		},
 		source: SourceStyle{
+			Color: NewColor(CodeFgHiBlack, CodeUnderline),
 			Prefix: AffixStyle{
-				Text:  "<",
 				Color: NewColor(CodeFgHiBlack),
+				Text:  "<",
 			},
 			Suffix: AffixStyle{
-				Text:  ">",
 				Color: NewColor(CodeFgHiBlack),
+				Text:  ">",
 			},
-			Color: NewColor(CodeFgHiBlack, CodeUnderline),
 		},
 		label: LabelStyle{
 			Color: NewColor(CodeFgHiBlack, CodeBold),

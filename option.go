@@ -179,12 +179,12 @@ func WithAttrStyle(value AttrStyle) StyleOption {
 // option holds handler options before they are compiled into a config.
 type option struct {
 	level        slog.Leveler
-	label        string
 	source       func(*slog.Source) string
-	hasTime      bool
-	timeLayout   string
 	attrReplacer AttrReplacer
 	style        *Style
+	label        string
+	timeLayout   string
+	hasTime      bool
 }
 
 // newOption returns the default handler options.
