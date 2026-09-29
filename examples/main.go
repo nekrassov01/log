@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -32,7 +33,7 @@ func main() {
 	l.Info("info message")
 	l.Warn("warn message")
 	l.Error("error message")
-	println()
+	fmt.Println()
 
 	// Customize timestamp brackets and level backgrounds while preserving other defaults.
 	h = log.NewCLIHandler(os.Stdout,
@@ -84,7 +85,7 @@ func main() {
 	l.Info("info message")
 	l.Warn("warn message")
 	l.Error("error message")
-	println()
+	fmt.Println()
 
 	// Derive labeled handlers so application and SDK logs share one output and style.
 	c := log.NewCLIHandler(os.Stdout,
@@ -97,5 +98,5 @@ func main() {
 	sdk.Debug("sending request: ListBuckets")
 	sdk.Warn("retrying request: ListBuckets, attempt 2")
 	app.Info("listed buckets", slog.Int("count", 3))
-	println()
+	fmt.Println()
 }
