@@ -2,7 +2,7 @@ package log
 
 import "strconv"
 
-// SGR (Select Graphic Rendition) codes accepted by NewColor.
+// SGR (Select Graphic Rendition) codes accepted by [NewColor].
 // Fg and Bg select foreground and background colors; Hi selects bright colors.
 const (
 	CodeReset        = 0
