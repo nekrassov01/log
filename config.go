@@ -37,9 +37,9 @@ func newConfig(option *option, colored bool) config {
 
 // timeConfig holds the encoded time configuration.
 type timeConfig struct {
+	layout  string
 	prefix  []byte
 	suffix  []byte
-	layout  string
 	enabled bool
 }
 
@@ -47,9 +47,9 @@ type timeConfig struct {
 func newTimeConfig(style TimeStyle, layout string, enabled, colored bool) timeConfig {
 	prefix, suffix := encodeAffixes(style.Prefix, style.Suffix, style.Color, colored)
 	return timeConfig{
+		layout:  layout,
 		prefix:  prefix,
 		suffix:  suffix,
-		layout:  layout,
 		enabled: enabled,
 	}
 }
@@ -86,27 +86,27 @@ func newLevelConfig(threshold slog.Leveler, styles map[slog.Level]LevelStyle, co
 
 // sourceConfig holds the encoded source configuration.
 type sourceConfig struct {
+	value  func(*slog.Source) string
 	prefix []byte
 	suffix []byte
-	value  func(*slog.Source) string
 }
 
 // newSourceConfig compiles the source configuration.
 func newSourceConfig(style SourceStyle, value func(*slog.Source) string, colored bool) sourceConfig {
 	prefix, suffix := encodeAffixes(style.Prefix, style.Suffix, style.Color, colored)
 	return sourceConfig{
+		value:  value,
 		prefix: prefix,
 		suffix: suffix,
-		value:  value,
 	}
 }
 
 // labelConfig holds the encoded label configuration.
 // The value includes its padding, so the decoration does not depend on the label.
 type labelConfig struct {
+	value  string
 	prefix []byte
 	suffix []byte
-	value  string
 	width  int
 }
 

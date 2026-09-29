@@ -25,11 +25,11 @@ var _ slog.Handler = (*CLIHandler)(nil)
 // attributes, groups, and label while sharing the output lock and source cache.
 // Separately constructed handlers use separate locks.
 type CLIHandler struct {
+	writer *writer
+	source *source
 	config config
 	attrs  []byte
 	groups []string
-	writer *writer
-	source *source
 }
 
 // NewCLIHandler returns a handler that writes to w using opts.
@@ -46,12 +46,12 @@ func NewCLIHandler(w io.Writer, opts ...CLIHandlerOption) *CLIHandler {
 		}
 	}
 	writer := newWriter(w)
-	config := newConfig(&option, writer.terminal)
 	source := newSource(option.source)
+	config := newConfig(&option, writer.terminal)
 	return &CLIHandler{
-		config: config,
 		writer: writer,
 		source: source,
+		config: config,
 	}
 }
 

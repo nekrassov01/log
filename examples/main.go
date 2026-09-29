@@ -52,23 +52,23 @@ func main() {
 			}),
 			log.WithLevelStyle(map[slog.Level]log.LevelStyle{
 				slog.LevelDebug: {
-					Text:  "DBG",
 					Color: log.NewColor(48, 2, 95, 95, 255),
+					Text:  "DBG",
 					Width: 5,
 				},
 				slog.LevelInfo: {
-					Text:  "INF",
 					Color: log.NewColor(48, 2, 95, 255, 215),
+					Text:  "INF",
 					Width: 5,
 				},
 				slog.LevelWarn: {
-					Text:  "WRN",
 					Color: log.NewColor(48, 2, 215, 255, 135),
+					Text:  "WRN",
 					Width: 5,
 				},
 				slog.LevelError: {
-					Text:  "ERR",
 					Color: log.NewColor(48, 2, 255, 95, 135),
+					Text:  "ERR",
 					Width: 5,
 				},
 			}),

@@ -62,9 +62,9 @@ func Test_lineState_appendTime(t *testing.T) {
 			args: args{
 				value: testTime(),
 				config: timeConfig{
+					layout: time.Kitchen,
 					prefix: []byte("<"),
 					suffix: []byte(">"),
-					layout: time.Kitchen,
 				},
 			},
 			want: want{

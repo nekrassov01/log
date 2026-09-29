@@ -41,32 +41,32 @@ func DefaultStyle() *Style {
 	return &Style{
 		level: map[slog.Level]LevelStyle{
 			slog.LevelDebug: {
-				Text:  "DBG",
 				Color: NewColor(38, 2, 95, 95, 255, CodeBold),
+				Text:  "DBG",
 			},
 			slog.LevelInfo: {
-				Text:  "INF",
 				Color: NewColor(38, 2, 95, 255, 215, CodeBold),
+				Text:  "INF",
 			},
 			slog.LevelWarn: {
-				Text:  "WRN",
 				Color: NewColor(38, 2, 215, 255, 135, CodeBold),
+				Text:  "WRN",
 			},
 			slog.LevelError: {
-				Text:  "ERR",
 				Color: NewColor(38, 2, 255, 95, 135, CodeBold),
+				Text:  "ERR",
 			},
 		},
 		source: SourceStyle{
+			Color: NewColor(CodeFgHiBlack, CodeUnderline),
 			Prefix: AffixStyle{
-				Text:  "<",
 				Color: affixColor,
+				Text:  "<",
 			},
 			Suffix: AffixStyle{
-				Text:  ">",
 				Color: affixColor,
+				Text:  ">",
 			},
-			Color: NewColor(CodeFgHiBlack, CodeUnderline),
 		},
 		label: LabelStyle{
 			Color: NewColor(CodeFgHiBlack, CodeBold),
@@ -98,9 +98,9 @@ func (o *Style) With(opts ...StyleOption) *Style {
 // Prefix and Suffix surround the timestamp; Color applies to the timestamp itself.
 // A nil Color adds no color. The layout is set by [WithTimeLayout].
 type TimeStyle struct {
+	Color  *Color
 	Prefix AffixStyle
 	Suffix AffixStyle
-	Color  *Color
 }
 
 // LevelStyle decorates a built-in log level.
@@ -108,10 +108,10 @@ type TimeStyle struct {
 // Width sets the minimum text width, excluding affixes, without truncation.
 // Padding is centered with any extra column on the right; non-positive Width adds none.
 type LevelStyle struct {
+	Color  *Color
 	Prefix AffixStyle
 	Suffix AffixStyle
 	Text   string
-	Color  *Color
 	Width  int
 }
 
@@ -120,9 +120,9 @@ type LevelStyle struct {
 // A nil Color adds no color. Source selection is controlled by [WithSourcePath]
 // and [WithSourceFunction].
 type SourceStyle struct {
+	Color  *Color
 	Prefix AffixStyle
 	Suffix AffixStyle
-	Color  *Color
 }
 
 // LabelStyle decorates the text set by [WithLabel] or [CLIHandler.WithLabel].
@@ -130,9 +130,9 @@ type SourceStyle struct {
 // Width sets the minimum label width, excluding affixes, without truncation.
 // Padding is centered with any extra column on the right; non-positive Width adds none.
 type LabelStyle struct {
+	Color  *Color
 	Prefix AffixStyle
 	Suffix AffixStyle
-	Color  *Color
 	Width  int
 }
 
@@ -140,9 +140,9 @@ type LabelStyle struct {
 // Prefix and Suffix surround the message; Color applies to the message itself.
 // A nil Color adds no color.
 type MessageStyle struct {
+	Color  *Color
 	Prefix AffixStyle
 	Suffix AffixStyle
-	Color  *Color
 }
 
 // AttrStyle decorates ordinary attributes without affecting built-in output.
@@ -158,6 +158,6 @@ type AttrStyle struct {
 // Text is written verbatim, and Color applies only to Text.
 // Empty Text produces no output; a nil Color adds no color.
 type AffixStyle struct {
-	Text  string
 	Color *Color
+	Text  string
 }

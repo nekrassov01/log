@@ -557,8 +557,8 @@ func Test_newOption(t *testing.T) {
 	type want struct {
 		level      slog.Leveler
 		label      string
-		hasTime    bool
 		timeLayout string
+		hasTime    bool
 	}
 	tests := []struct {
 		name string
@@ -576,8 +576,8 @@ func Test_newOption(t *testing.T) {
 			o := newOption()
 			assertValue(t, o.level, test.want.level, "level")
 			assertValue(t, o.label, test.want.label, "label")
-			assertValue(t, o.hasTime, test.want.hasTime, "time")
 			assertValue(t, o.timeLayout, test.want.timeLayout, "layout")
+			assertValue(t, o.hasTime, test.want.hasTime, "time")
 			assertValue(t, o.source == nil, true, "source disabled")
 			assertValue(t, o.attrReplacer == nil, true, "replacer absent")
 			assertValue(t, o.style, DefaultStyle(), "default style")
