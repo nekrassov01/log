@@ -13,6 +13,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"strings"
 )
 
 var _ slog.Handler = (*CLIHandler)(nil)
@@ -69,33 +70,14 @@ func (o *CLIHandler) Enabled(_ context.Context, level slog.Level) bool {
 // It returns any write error, including [io.ErrShortWrite] for a partial write.
 // It ignores the context and does not check the minimum level.
 func (o *CLIHandler) Handle(_ context.Context, record slog.Record) error {
+	if o.config.splitLines && strings.Contains(record.Message, "\n") {
+		return o.handleLines(record)
+	}
 	config := &o.config
 	s := acquireState()
-	if config.time.enabled && !record.Time.IsZero() {
-		s.line.appendTime(record.Time, &config.time)
-	}
-	s.line.appendLevel(record.Level, config.level.texts)
-	if o.source != nil {
-		text := o.source.resolve(record.PC)
-		if text != nil {
-			s.line.appendSource(text, &config.source)
-		}
-	}
-	if config.label.value != "" {
-		s.line.appendLabel(&config.label)
-	}
+	o.appendPrefix(s, record)
 	s.line.appendMessage(record.Message, &config.message)
-	s.line.appendCachedAttrs(o.attrs)
-	if record.NumAttrs() > 0 {
-		s.attr.prepare(o.groups)
-		yield := func(attr slog.Attr, kind slog.Kind, path []byte) {
-			s.line.appendAttr(attr, kind, path, &config.attr)
-		}
-		record.Attrs(func(attr slog.Attr) bool {
-			s.attr.resolve(attr, config.attr.replacer, yield)
-			return true
-		})
-	}
+	o.appendAttrs(s, record)
 	s.line.appendNewline()
 	err := o.writer.write(s.line.buf)
 	releaseState(s)
@@ -151,4 +133,71 @@ func (o *CLIHandler) WithLabel(label string) slog.Handler {
 	}
 	h2.config.label.value = value
 	return &h2
+}
+
+// handleLines formats shared components once and writes all lines together.
+func (o *CLIHandler) handleLines(record slog.Record) error {
+	var s *state
+	var prefixEnd, attrsStart, attrsEnd int
+	for line := range strings.Lines(record.Message) {
+		if strings.HasSuffix(line, "\n") {
+			line = strings.TrimSuffix(line, "\n")
+			line = strings.TrimSuffix(line, "\r")
+		}
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		if s == nil {
+			s = acquireState()
+			o.appendPrefix(s, record)
+			prefixEnd = len(s.line.buf)
+			s.line.appendMessage(line, &o.config.message)
+			attrsStart = len(s.line.buf)
+			o.appendAttrs(s, record)
+			attrsEnd = len(s.line.buf)
+		} else {
+			s.line.buf = append(s.line.buf, s.line.buf[:prefixEnd]...)
+			s.line.appendMessage(line, &o.config.message)
+			s.line.buf = append(s.line.buf, s.line.buf[attrsStart:attrsEnd]...)
+		}
+		s.line.appendNewline()
+	}
+	if s == nil {
+		return nil
+	}
+	err := o.writer.write(s.line.buf)
+	releaseState(s)
+	return err
+}
+
+// appendPrefix formats the built-in components preceding the message.
+func (o *CLIHandler) appendPrefix(s *state, record slog.Record) {
+	config := &o.config
+	if config.time.enabled && !record.Time.IsZero() {
+		s.line.appendTime(record.Time, &config.time)
+	}
+	s.line.appendLevel(record.Level, config.level.texts)
+	if o.source != nil {
+		if text := o.source.resolve(record.PC); text != nil {
+			s.line.appendSource(text, &config.source)
+		}
+	}
+	if config.label.value != "" {
+		s.line.appendLabel(&config.label)
+	}
+}
+
+// appendAttrs formats cached and record attributes.
+func (o *CLIHandler) appendAttrs(s *state, record slog.Record) {
+	s.line.appendCachedAttrs(o.attrs)
+	if record.NumAttrs() == 0 {
+		return
+	}
+	s.attr.prepare(o.groups)
+	record.Attrs(func(attr slog.Attr) bool {
+		s.attr.resolve(attr, o.config.attr.replacer, func(attr slog.Attr, kind slog.Kind, path []byte) {
+			s.line.appendAttr(attr, kind, path, &o.config.attr)
+		})
+		return true
+	})
 }

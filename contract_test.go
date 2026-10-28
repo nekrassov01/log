@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -66,6 +67,60 @@ func TestCLIHandler_Nonterminal(t *testing.T) {
 			got, err := io.ReadAll(r)
 			assertError(t, err, nil)
 			assertBytes(t, got, test.want.val, "output")
+		})
+	}
+}
+
+// TestCLIHandler_SplitLinesConcurrent checks that each split record stays together
+// when derived handlers write concurrently through their shared writer.
+func TestCLIHandler_SplitLinesConcurrent(t *testing.T) {
+	type args struct {
+		count int
+	}
+	type want struct {
+		lines int
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "shared writer",
+			args: args{
+				count: 64,
+			},
+			want: want{
+				lines: 128,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			buf := &bytes.Buffer{}
+			parent := NewCLIHandler(buf, WithSplitLines())
+			start := make(chan struct{})
+			var wg sync.WaitGroup
+			for i := range test.args.count {
+				logger := slog.New(parent.WithAttrs([]slog.Attr{slog.Int("id", i)}))
+				wg.Go(func() {
+					<-start
+					logger.Info("first\nsecond")
+				})
+			}
+			close(start)
+			wg.Wait()
+			lines := strings.Split(strings.TrimSuffix(buf.String(), "\n"), "\n")
+			assertValue(t, len(lines), test.want.lines, "lines")
+			seen := make(map[string]bool)
+			for i := 0; i+1 < len(lines); i += 2 {
+				id, ok := strings.CutPrefix(lines[i], "INF first id=")
+				if !ok || lines[i+1] != "INF second id="+id || seen[id] {
+					t.Errorf("unexpected adjacent lines: %q, %q", lines[i], lines[i+1])
+				}
+				seen[id] = true
+			}
+			assertValue(t, len(seen), test.args.count, "records")
 		})
 	}
 }

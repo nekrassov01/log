@@ -288,6 +288,30 @@ func TestWithStyle(t *testing.T) {
 	}
 }
 
+func TestWithSplitLines(t *testing.T) {
+	type want struct {
+		val bool
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "enabled",
+			want: want{
+				val: true,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			o := newOption()
+			WithSplitLines().apply(&o)
+			assertValue(t, o.splitLines, test.want.val, "splitLines")
+		})
+	}
+}
+
 func TestWithTimeStyle(t *testing.T) {
 	type args struct {
 		value TimeStyle

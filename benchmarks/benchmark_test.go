@@ -39,6 +39,19 @@ func BenchmarkCLIHandler_Message(b *testing.B) {
 	}
 }
 
+// BenchmarkCLIHandler_SplitLines compares the default and split output paths.
+func BenchmarkCLIHandler_SplitLines(b *testing.B) {
+	for _, test := range testSplitLines() {
+		b.Run(test.name, func(b *testing.B) {
+			l := slog.New(log.NewCLIHandler(io.Discard, test.opts...))
+			b.ReportAllocs()
+			for b.Loop() {
+				l.Info(test.message)
+			}
+		})
+	}
+}
+
 // BenchmarkCLIHandler_BuiltIns isolates the optional timestamp, source, and label.
 // Source cases include warm-cache lookups from the same logging call site.
 func BenchmarkCLIHandler_BuiltIns(b *testing.B) {

@@ -10,12 +10,13 @@ import (
 // config holds precomputed output settings shared by derived handlers.
 // The level threshold and attribute replacer may refer to caller-managed state.
 type config struct {
-	time    timeConfig
-	level   levelConfig
-	source  sourceConfig
-	label   labelConfig
-	message messageConfig
-	attr    attrConfig
+	time       timeConfig
+	level      levelConfig
+	source     sourceConfig
+	label      labelConfig
+	message    messageConfig
+	attr       attrConfig
+	splitLines bool
 }
 
 // newConfig precomputes output settings, fixing color use and the shared time layout.
@@ -26,12 +27,13 @@ func newConfig(option *option, colored bool) config {
 		layout = time.RFC3339
 	}
 	return config{
-		time:    newTimeConfig(style.time, layout, option.hasTime, colored),
-		level:   newLevelConfig(option.level, style.level, colored),
-		source:  newSourceConfig(style.source, option.source, colored),
-		label:   newLabelConfig(option.label, style.label, colored),
-		message: newMessageConfig(style.message, colored),
-		attr:    newAttrConfig(style.attr, option.attrReplacer, layout, colored),
+		time:       newTimeConfig(style.time, layout, option.hasTime, colored),
+		level:      newLevelConfig(option.level, style.level, colored),
+		source:     newSourceConfig(style.source, option.source, colored),
+		label:      newLabelConfig(option.label, style.label, colored),
+		message:    newMessageConfig(style.message, colored),
+		attr:       newAttrConfig(style.attr, option.attrReplacer, layout, colored),
+		splitLines: option.splitLines,
 	}
 }
 

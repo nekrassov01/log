@@ -112,6 +112,16 @@ func WithStyle(s *Style) CLIHandlerOption {
 	}
 }
 
+// WithSplitLines displays non-blank message lines separately. LF and CRLF
+// delimit lines; blank lines are omitted. Messages without LF are unchanged.
+func WithSplitLines() CLIHandlerOption {
+	return CLIHandlerOption{
+		apply: func(o *option) {
+			o.splitLines = true
+		},
+	}
+}
+
 // StyleOption configures a [Style]. Its zero value has no effect.
 type StyleOption struct {
 	apply func(*Style)
@@ -185,6 +195,7 @@ type option struct {
 	label        string
 	timeLayout   string
 	hasTime      bool
+	splitLines   bool
 }
 
 // newOption returns the default handler options.
