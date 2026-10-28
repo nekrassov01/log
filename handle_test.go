@@ -864,6 +864,220 @@ func TestCLIHandler_Handle(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "split attributes resolved once",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				config: testConfig(false, WithSplitLines(), WithAttrReplacer(func() AttrReplacer {
+					count := 0
+					return func(_ []string, attr slog.Attr) slog.Attr {
+						count++
+						return slog.Int(attr.Key, count)
+					}
+				}())),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "first\nsecond", 0, slog.Int("k", 0)),
+			},
+			want: want{
+				val: "INF first k=1\nINF second k=1\n",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "split shared components and groups",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				source: testSource("file.go", 83),
+				config: testConfig(false, WithSplitLines(), WithTime(), WithLabel("APP")),
+				attrs:  []byte("cached=1"),
+				groups: []string{"group"},
+			},
+			args: args{
+				record: testRecord(testTime(), slog.LevelInfo, "first\nsecond", 1, slog.String("k", "v")),
+			},
+			want: want{
+				val: "1970-01-01T00:00:01Z INF <file.go:83> APP first cached=1 group.k=v\n1970-01-01T00:00:01Z INF <file.go:83> APP second cached=1 group.k=v\n",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "split lines",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				config: testConfig(false, WithSplitLines()),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "first\nsecond", 0, slog.String("k", "v")),
+			},
+			want: want{
+				val: "INF first k=v\nINF second k=v\n",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "split short write",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{count: new(int)},
+				},
+				config: testConfig(false, WithSplitLines()),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "first\nsecond", 0),
+			},
+			want: want{
+				val: "INF first\nINF second\n",
+				err: func(*testWriter) error {
+					return io.ErrShortWrite
+				},
+			},
+		},
+		{
+			name: "split colored output",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				config: testConfig(true, WithSplitLines(), WithStyle(DefaultStyle().With(WithMessageStyle(MessageStyle{
+					Color: NewColor(CodeFgGreen),
+				}), WithAttrStyle(AttrStyle{
+					Separator:  "=",
+					KeyColor:   NewColor(CodeFgHiBlack),
+					ValueColor: NewColor(CodeFgRed),
+				})))),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "first\nsecond", 0, slog.String("k", "v")),
+			},
+			want: want{
+				val: "\x1b[38;2;95;255;215;1mINF\x1b[0m \x1b[32mfirst\x1b[0m \x1b[90mk=\x1b[0m\x1b[31mv\x1b[0m\n" +
+					"\x1b[38;2;95;255;215;1mINF\x1b[0m \x1b[32msecond\x1b[0m \x1b[90mk=\x1b[0m\x1b[31mv\x1b[0m\n",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "split CRLF and blank lines",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				config: testConfig(false, WithSplitLines()),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "first\r\n\n  \nsecond\n", 0, slog.String("k", "v")),
+			},
+			want: want{
+				val: "INF first k=v\nINF second k=v\n",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "split lone CR",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				config: testConfig(false, WithSplitLines()),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "a\rb", 0, slog.String("k", "v")),
+			},
+			want: want{
+				val: "INF \"a\\rb\" k=v\n",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "split control character",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				config: testConfig(false, WithSplitLines()),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "tab\there\nnext", 0, slog.String("k", "v")),
+			},
+			want: want{
+				val: "INF \"tab\\there\" k=v\nINF next k=v\n",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "split only blank lines",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				config: testConfig(false, WithSplitLines()),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "\n \n", 0, slog.String("k", "v")),
+			},
+			want: want{
+				val: "",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "split empty message",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				config: testConfig(false, WithSplitLines()),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "", 0, slog.String("k", "v")),
+			},
+			want: want{
+				val: "INF  k=v\n",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
+		{
+			name: "default multiline",
+			fields: fields{
+				writer: &writer{
+					w: &testWriter{},
+				},
+				config: testConfig(false),
+			},
+			args: args{
+				record: testRecord(time.Time{}, slog.LevelInfo, "first\nsecond", 0, slog.String("k", "v")),
+			},
+			want: want{
+				val: "INF \"first\\nsecond\" k=v\n",
+				err: func(*testWriter) error {
+					return nil
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

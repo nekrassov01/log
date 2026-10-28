@@ -138,6 +138,12 @@ handler := log.NewCLIHandler(os.Stdout,
 
 This removes the named attribute, not sensitive content in messages or other attributes. Avoid logging secrets at their source whenever possible.
 
+Use `log.WithSplitLines()` to display messages containing LF as separate lines,
+each with the same context and attributes. CRLF is supported, and blank lines
+are omitted; a message containing LF and only blank lines produces no output.
+Messages without LF retain their normal formatting. By default, multiline
+messages are escaped and displayed on one line.
+
 See [examples/main.go](./examples/main.go) and the [API reference](https://pkg.go.dev/github.com/nekrassov01/log).
 
 ## Performance
