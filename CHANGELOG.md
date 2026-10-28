@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.0.4](https://github.com/nekrassov01/log/compare/v0.0.3...v0.0.4) - 2026-10-28
+
+- Add optional multiline message splitting by @nekrassov01 in https://github.com/nekrassov01/log/pull/14
+- Update dependencies by @nekrassov01 in https://github.com/nekrassov01/log/pull/16
+
 ## [v0.0.3](https://github.com/nekrassov01/log/compare/v0.0.2...v0.0.3) - 2026-09-29
 
 - Reorder struct fields to reduce pointer scan range by @nekrassov01 in https://github.com/nekrassov01/log/pull/8
