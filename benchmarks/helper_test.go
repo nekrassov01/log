@@ -28,6 +28,13 @@ type testMessageCase struct {
 	value string
 }
 
+// testSplitLinesCase describes one message and split option workload.
+type testSplitLinesCase struct {
+	name    string
+	message string
+	opts    []log.CLIHandlerOption
+}
+
 // testBuiltInCase describes one built-in workload.
 type testBuiltInCase struct {
 	name string
@@ -138,6 +145,30 @@ func testMessages() []testMessageCase {
 		{
 			name:  "Bytes/65536",
 			value: strings.Repeat("x", 65536),
+		},
+	}
+}
+
+// testSplitLines supplies single-line and multiline benchmark inputs.
+func testSplitLines() []testSplitLinesCase {
+	return []testSplitLinesCase{
+		{
+			name:    "Single/Default",
+			message: "first line",
+		},
+		{
+			name:    "Single/Split",
+			message: "first line",
+			opts:    []log.CLIHandlerOption{log.WithSplitLines()},
+		},
+		{
+			name:    "Multiple/Default",
+			message: "first line\nsecond line\nthird line",
+		},
+		{
+			name:    "Multiple/Split",
+			message: "first line\nsecond line\nthird line",
+			opts:    []log.CLIHandlerOption{log.WithSplitLines()},
 		},
 	}
 }
